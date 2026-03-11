@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Glassmorphism Login - Future Modern</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- BEGIN: Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            glass: {
+              DEFAULT: 'rgba(255, 255, 255, 0.1)',
+              border: 'rgba(255, 255, 255, 0.2)',
+              input: 'rgba(255, 255, 255, 0.05)',
+            }
+          },
+          backdropBlur: {
+            'xl': '20px',
+          }
+        }
+      }
+    }
+  </script>
+<!-- END: Tailwind Configuration -->
+<!-- BEGIN: Custom Styles -->
+<style data-purpose="background-animation">
+    @keyframes float {
+      0% { transform: translateY(0px) translateX(0px); }
+      50% { transform: translateY(-30px) translateX(20px); }
+      100% { transform: translateY(0px) translateX(0px); }
+    }
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+    .animate-float-delayed {
+      animation: float 8s ease-in-out infinite;
+      animation-delay: 2s;
+    }
+    .animate-float-slow {
+      animation: float 12s ease-in-out infinite;
+      animation-delay: 1s;
+    }
+  </style>
+<style data-purpose="glass-effects">
+    .glass-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+    .glass-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    .glass-input:focus {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.4);
+      outline: none;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+  </style>
+<!-- END: Custom Styles -->
+</head>
+<body class="bg-black min-h-screen flex items-center justify-center overflow-hidden font-sans">
+<!-- BEGIN: Background Elements -->
+<!-- This section creates the colorful, moving background blobs required for the glass effect depth -->
+<div class="fixed inset-0 -z-10 overflow-hidden" data-purpose="animated-background">
+<!-- Blue Blob -->
+<div class="absolute top-[10%] left-[15%] w-72 h-72 bg-blue-600 rounded-full mix-blend-screen filter blur-[80px] opacity-60 animate-float"></div>
+<!-- Purple Blob -->
+<div class="absolute bottom-[20%] right-[10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-float-delayed"></div>
+<!-- Pink Blob -->
+<div class="absolute top-[40%] right-[25%] w-64 h-64 bg-pink-500 rounded-full mix-blend-screen filter blur-[80px] opacity-40 animate-float-slow"></div>
+<!-- Cyan Blob -->
+<div class="absolute bottom-[10%] left-[30%] w-80 h-80 bg-cyan-400 rounded-full mix-blend-screen filter blur-[90px] opacity-30 animate-float"></div>
+</div>
+<!-- END: Background Elements -->
+<!-- BEGIN: Login Container -->
+<main class="relative z-10 w-full max-w-md px-6">
+<div class="glass-card rounded-3xl p-8 md:p-12" data-purpose="login-form-container">
+<!-- Logo/Title Section -->
+<div class="text-center mb-10">
+<!-- Minimalist Icon -->
+<div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 border border-white/20 mb-6 mx-auto">
+<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 3c1.22 0 2.383.218 3.46.616m.835 3.197a10.011 10.011 0 011.89 4.803l.053.316m-3.478 6.313a10.016 10.016 0 01-9.477-1.423m14.561-1.012a9.967 9.967 0 01-5.88 2.29m3.08-13.622a10.014 10.014 0 014.213 8.974" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+</div>
+<h1 class="text-3xl font-bold text-white tracking-tight">Welcome Back</h1>
+<p class="text-white/60 mt-2 text-sm">Please enter your details to sign in.</p>
+</div>
+<!-- BEGIN: LoginForm -->
+<form action="#" class="space-y-6" method="POST">
+<!-- Username Field -->
+<div data-purpose="input-group">
+<label class="block text-sm font-medium text-white/80 mb-2 ml-1" for="username">Username</label>
+<div class="relative">
+<input class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="username" name="username" placeholder="e.g. johndoe" required="" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div data-purpose="input-group">
+<div class="flex items-center justify-between mb-2 ml-1">
+<label class="block text-sm font-medium text-white/80" for="password">Password</label>
+<a class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<input class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+</div>
+</div>
+<!-- Submit Button -->
+<div class="pt-2">
+<button class="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-white/5" type="submit">
+            Login
+          </button>
+</div><div class="mt-4">
+<button class="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-white/5 flex items-center justify-center gap-3" type="button">
+<svg class="w-5 h-5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335"></path>
+</svg>
+    Login with Google
+  </button>
+</div>
+<!-- Alternative Options -->
+<div class="text-center mt-8">
+<p class="text-white/40 text-sm">
+            Don't have an account? 
+            <a class="text-white font-medium hover:underline decoration-white/30 underline-offset-4" href="#">Create Account</a>
+</p>
+</div>
+</form>
+<!-- END: LoginForm -->
+</div>
+<!-- Footer Credits -->
+<p class="text-center mt-8 text-white/20 text-xs uppercase tracking-[0.2em]">
+      © 2024 Future Glass Interface
+    </p>
+</main>
+<!-- END: Login Container -->
+</body></html>
