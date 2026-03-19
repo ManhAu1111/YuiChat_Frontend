@@ -1,9 +1,14 @@
 <script setup>
 import ChatList from '../components/chat/ChatList.vue';
 import ChatWindow from '../components/chat/ChatWindow.vue';
+import BottomNav from '../components/chat/BottomNav.vue';
+import ContactsPlaceholder from '../components/chat/ContactsPlaceholder.vue';
+import ProfilePlaceholder from '../components/chat/ProfilePlaceholder.vue';
+import SettingsPlaceholder from '../components/chat/SettingsPlaceholder.vue';
 import { ref } from 'vue';
 
 const selectedChatId = ref(null);
+const currentTab = ref('messages');
 
 const handleSelectChat = (chatId) => {
   selectedChatId.value = chatId;
@@ -13,16 +18,27 @@ const handleSelectChat = (chatId) => {
 const handleBackToList = () => {
   selectedChatId.value = null;
 };
+
+const handleTabChange = (tabId) => {
+  currentTab.value = tabId;
+};
 </script>
 
 <template>
   <div class="flex h-screen bg-gray-50 overflow-hidden font-sans">
     
     <aside 
-      class="w-full md:w-[350px] bg-white border-r border-gray-200 flex-col"
+      class="w-full md:w-[350px] bg-white border-r border-gray-200 flex flex-col h-full"
       :class="selectedChatId ? 'hidden md:flex' : 'flex'"
     >
-      <ChatList @select-chat="handleSelectChat" />
+      <div class="flex-1 overflow-hidden flex flex-col">
+        <ChatList v-if="currentTab === 'messages'" @select-chat="handleSelectChat" />
+        <ContactsPlaceholder v-else-if="currentTab === 'contacts'" />
+        <ProfilePlaceholder v-else-if="currentTab === 'profile'" />
+        <SettingsPlaceholder v-else-if="currentTab === 'settings'" />
+      </div>
+
+      <BottomNav :currentTab="currentTab" @change-tab="handleTabChange" />
     </aside>
 
     <main 
