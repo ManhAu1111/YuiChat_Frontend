@@ -1,3 +1,4 @@
+
 <script setup>
 const props = defineProps({
   currentTab: {
@@ -37,12 +38,12 @@ const changeTab = (tabId) => {
 </script>
 
 <template>
-  <div class="h-16 border-t border-gray-200 flex items-center justify-around bg-white flex-shrink-0">
+  <div class="h-16 border-t border-white/20 flex items-center justify-around glass-card flex-shrink-0 text-white rounded-bl-3xl">
     <button 
       v-for="tab in tabs" 
       :key="tab.id"
       class="flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors duration-200"
-      :class="currentTab === tab.id ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'"
+      :class="currentTab === tab.id ? 'text-blue-400' : 'text-white/50 hover:text-white'"
       @click="changeTab(tab.id)"
     >
       <span v-html="tab.icon" class="flex items-center justify-center"></span>

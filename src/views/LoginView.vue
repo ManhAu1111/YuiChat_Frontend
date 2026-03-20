@@ -1,9 +1,39 @@
 <script setup>
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth'; // Import cái "ví" Pinia của bạn
+import AnimatedBackground from '../components/AnimatedBackground.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
+
+const email = ref('');
+const password = ref('');
+const errorMessage = ref('');
+const isLoading = ref(false);
+
+const handleLogin = async () => {
+  if (!email.value || !password.value) {
+    errorMessage.value = "Vui lòng nhập đầy đủ email và mật khẩu.";
+    return;
+  }
+
+  isLoading.value = true;
+  errorMessage.value = "";
+  
+  try {
+    await authStore.login({
+      email: email.value,
+      password: password.value
+    });
+    router.push({ name: 'chat' });
+  } catch (error) {
+    console.error("Lỗi đăng nhập:", error);
+    errorMessage.value = error.response?.data?.message || "Email hoặc mật khẩu không chính xác.";
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 // Hàm này được gọi khi bạn bấm nút Google và đăng nhập thành công
 const handleLoginSuccess = async (response) => {
@@ -11,20 +41,15 @@ const handleLoginSuccess = async (response) => {
     await authStore.loginWithGoogle(response.credential);
     router.push({ name: 'chat' });
   } catch (error) {
-    console.error("Lỗi rồi:", error);
-    alert("Đăng nhập thất bại! Kiểm tra console.");
+    console.error("Lỗi Google Login:", error);
+    alert("Đăng nhập Google thất bại!");
   }
 };
 </script>
 
 <template>
   <div class="bg-black min-h-screen flex items-center justify-center overflow-hidden font-sans relative">
-    <div class="fixed inset-0 z-0 overflow-hidden" data-purpose="animated-background">
-      <div class="absolute top-[10%] left-[15%] w-72 h-72 bg-blue-600 rounded-full mix-blend-screen filter blur-[80px] opacity-60 animate-float"></div>
-      <div class="absolute bottom-[20%] right-[10%] w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-float-delayed"></div>
-      <div class="absolute top-[40%] right-[25%] w-64 h-64 bg-pink-500 rounded-full mix-blend-screen filter blur-[80px] opacity-40 animate-float-slow"></div>
-      <div class="absolute bottom-[10%] left-[30%] w-80 h-80 bg-cyan-400 rounded-full mix-blend-screen filter blur-[90px] opacity-30 animate-float"></div>
-    </div>
+    <AnimatedBackground />
     <main class="relative z-10 w-full max-w-md px-6">
       <div class="glass-card rounded-3xl p-8 md:p-12">
         <div class="text-center mb-10">
@@ -37,11 +62,15 @@ const handleLoginSuccess = async (response) => {
           <p class="text-white/60 mt-2 text-sm">Đăng nhập để vào phòng Chat</p>
         </div>
 
-        <form @submit.prevent class="space-y-6">
+        <form @submit.prevent="handleLogin" class="space-y-6">
+          <div v-if="errorMessage" class="bg-red-500/10 border border-red-500/20 text-red-400 text-xs py-3 px-4 rounded-xl animate-pulse">
+            {{ errorMessage }}
+          </div>
+
           <div>
-            <label class="block text-sm font-medium text-white/80 mb-2 ml-1" for="username">Tài khoản</label>
+            <label class="block text-sm font-medium text-white/80 mb-2 ml-1" for="username">Email</label>
             <div class="relative">
-              <input class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="username" placeholder="Nhập email..." type="text" />
+              <input v-model="email" class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="username" placeholder="Nhập email..." type="email" required />
             </div>
           </div>
 
@@ -51,13 +80,13 @@ const handleLoginSuccess = async (response) => {
               <a class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors" href="#">Quên mật khẩu?</a>
             </div>
             <div class="relative">
-              <input class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="password" placeholder="••••••••" type="password" />
+              <input v-model="password" class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="password" placeholder="••••••••" type="password" required />
             </div>
           </div>
 
           <div class="pt-2">
-            <button class="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-white/5" type="submit">
-              Đăng nhập
+            <button :disabled="isLoading" class="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-white/5 disabled:opacity-50" type="submit">
+              {{ isLoading ? 'Đang kiểm tra...' : 'Đăng nhập' }}
             </button>
           </div>
 
@@ -73,43 +102,3 @@ const handleLoginSuccess = async (response) => {
     </main>
   </div>
 </template>
-
-<style scoped>
-/* Hiệu ứng bong bóng lơ lửng */
-@keyframes float {
-  0% { transform: translateY(0px) translateX(0px); }
-  50% { transform: translateY(-30px) translateX(20px); }
-  100% { transform: translateY(0px) translateX(0px); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-.animate-float-delayed {
-  animation: float 8s ease-in-out infinite;
-  animation-delay: 2s;
-}
-.animate-float-slow {
-  animation: float 12s ease-in-out infinite;
-  animation-delay: 1s;
-}
-
-/* Hiệu ứng Kính mờ (Glassmorphism) */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-.glass-input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-}
-.glass-input:focus {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.4);
-  outline: none;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-}
-</style>
