@@ -1,21 +1,21 @@
 <script setup>
-// Props nhận chatId để sau này gọi API lấy user thật
-const props = defineProps(['chatId']);
-const emit = defineEmits(['backToChatList']);
+// Props nhận chatId và user để hiển thị theo API gốc
+const props = defineProps(['chatId', 'user']);
+const emit = defineEmits(['back']);
 </script>
 
 <template>
   <div class="h-16 border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0 bg-white">
     <div class="flex items-center">
-      <button @click="emit('backToChatList')" class="p-2 rounded-lg hover:bg-gray-100 hover:text-blue-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7-7 7"></path></svg>
+      <button @click="emit('back')" class="md:hidden p-2 mr-2 rounded-lg hover:bg-gray-100 hover:text-blue-600 text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
       </button>
       <div class="relative flex-shrink-0">
-        <img src="https://i.pravatar.cc/150?u=manh" alt="Avatar" class="w-10 h-10 rounded-full object-cover">
+        <img :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User')" alt="Avatar" class="w-10 h-10 rounded-full object-cover">
         <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
       </div>
       <div class="ml-3">
-        <h2 class="text-sm font-semibold text-gray-800">Âu Mạnh</h2>
+        <h2 class="text-sm font-semibold text-gray-800">{{ user?.name || 'Đang tải...' }}</h2>
         <p class="text-xs text-green-500">Đang hoạt động</p>
       </div>
     </div>
@@ -37,12 +37,3 @@ const emit = defineEmits(['backToChatList']);
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  name: 'ChatHeader',
-  props: {
-    chatId: Number
-  }
-}
-</script>

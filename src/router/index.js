@@ -22,6 +22,7 @@ const router = createRouter({
       path: '/chat',
       name: 'chat',
       component: ChatView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/about',
@@ -34,18 +35,18 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore();
 
   if (to.meta.requiresAuth && !authStore.token) {
-    // Nếu trang cần đăng nhập mà chưa có token -> Đuổi về trang chủ (login)
-    next({ name: 'login' });
+    // Nếu trang cần đăng nhập mà chưa có token -> Đuổi về login
+    return { name: 'login' };
   } else if (to.name === 'login' && authStore.token) {
     // Nếu có token rồi mà còn ráng vô trang login -> Đẩy thẳng vào phòng chat
-    next({ name: 'chat' });
-  } else {
-    next(); // Hợp lệ, cho qua!
+    return { name: 'chat' };
   }
+  
+  return true; // Hợp lệ, cho qua!
 })
 
 export default router

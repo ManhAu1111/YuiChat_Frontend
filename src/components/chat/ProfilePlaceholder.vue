@@ -2,6 +2,7 @@
 import { onMounted } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 const authStore = useAuthStore();
+const emit = defineEmits(['back']);
 
 onMounted(async () => {
   // Đồng bộ lại thông tin user từ server để tránh lỗi refresh làm mất state
@@ -18,7 +19,10 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col items-center justify-center h-full p-6 text-white">
+  <div class="relative flex-1 flex flex-col items-center justify-center h-full p-6 text-white">
+    <button class="md:hidden absolute top-4 left-4 p-2 text-white/70 hover:text-white rounded-full hover:bg-white/10 transition-colors" @click="emit('back')">
+      <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    </button>
     <div v-if="authStore.user" class="glass-card w-full max-w-sm p-8 rounded-3xl text-center space-y-6">
       <div class="relative inline-block">
         <div class="w-24 h-24 rounded-full bg-blue-500/20 border-2 border-white/20 flex items-center justify-center overflow-hidden mx-auto shadow-xl">
