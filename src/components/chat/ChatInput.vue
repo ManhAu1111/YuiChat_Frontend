@@ -1,13 +1,26 @@
 <script setup>
 import { ref } from 'vue';
+import { useChatStore } from '../../stores/chatStore';
 
+const props = defineProps(['conversationId']);
+const chatStore = useChatStore();
 const messageText = ref('');
+const isSending = ref(false);
 
-const sendMessage = () => {
-  if (messageText.value.trim()) {
-    console.log("Gửi tin nhắn:", messageText.value);
-    // Sau này sẽ gọi API Laravel gửi tin nhắn tại đây
-    messageText.value = ''; // Xóa ô nhập sau khi gửi
+const sendMessage = async () => {
+  if (messageText.value.trim() && !isSending.value) {
+    const content = messageText.value;
+    messageText.value = ''; // Xóa ô nhập ngay lập tức để tạo cảm giác mượt
+    
+    isSending.value = true;
+    try {
+      await chatStore.sendMessage(props.conversationId, content);
+    } catch (error) {
+      alert("Không thể gửi tin nhắn. Thử lại sau!");
+      messageText.value = content; // Trả lại text nếu lỗi
+    } finally {
+      isSending.value = false;
+    }
   }
 };
 </script>
