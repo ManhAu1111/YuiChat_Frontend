@@ -32,9 +32,15 @@ const scrollToBottom = async () => {
 };
 
 // Gọi lấy tin nhắn mỗi khi đổi chatId
-watch(() => props.chatId, (newId) => {
+watch(() => props.chatId, (newId, oldId) => {
+  if (oldId) {
+    chatStore.leaveChannel(oldId);
+  }
   if (newId) {
-    chatStore.fetchMessages(newId).then(scrollToBottom);
+    chatStore.fetchMessages(newId).then(() => {
+      scrollToBottom();
+      chatStore.listenForMessages(newId);
+    });
   }
 }, { immediate: true });
 
