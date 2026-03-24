@@ -3,7 +3,7 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
 const api = axios.create({
-  
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api',
   baseURL: 'http://192.168.2.16:8000/api',
   // baseURL: 'http://127.0.0.1:8000/api', // Đường dẫn tới Backend Laravel
   headers: {
