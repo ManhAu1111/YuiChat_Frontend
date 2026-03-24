@@ -6,6 +6,7 @@ export const useChatStore = defineStore('chat', {
   state: () => ({
     conversations: [],
     currentMessages: [],
+    messagesCache: {},
     searchResults: [],
     activeConversationId: null,
     isLoading: false,
@@ -101,12 +102,34 @@ export const useChatStore = defineStore('chat', {
 
     async fetchMessages(conversationId) {
       this.activeConversationId = conversationId;
+
+      // 1. KIỂM TRA CACHE TRƯỚC
+      // Nếu kho chứa đã có data của phòng này, lôi ra xài luôn và DỪNG LẠI (Không gọi API)
+      if (this.messagesCache[conversationId]) {
+        // Gán màn hình bằng mảng trong cache
+        this.currentMessages = this.messagesCache[conversationId];
+        return;
+      }
+
+      // 2. NẾU CACHE TRỐNG (Lần đầu mở) -> Dọn màn hình và gọi API
+      this.currentMessages = [];
+      this.isLoadingMessages = true;
+
       try {
         const response = await api.get(`/conversations/${conversationId}/messages`);
-        // Backend trả về phân trang, nên lấy data.data
-        this.currentMessages = response.data.data || response.data;
+        const fetchedMessages = response.data.data || response.data;
+
+        // 3. LƯU VÀO CACHE BẢO QUẢN
+        this.messagesCache[conversationId] = fetchedMessages;
+
+        // 4. HIỂN THỊ RA MÀN HÌNH
+        // (Lưu ý: Phải gán tham chiếu thẳng vào cache để sau này có tin mới nó tự update)
+        this.currentMessages = this.messagesCache[conversationId];
+
       } catch (error) {
         console.error('Lỗi lấy tin nhắn:', error);
+      } finally {
+        this.isLoadingMessages = false;
       }
     },
 
