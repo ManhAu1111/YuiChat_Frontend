@@ -80,7 +80,7 @@ const handleLoginSuccess = async (response) => {
               <a class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors" href="#">Quên mật khẩu?</a>
             </div>
             <div class="relative">
-              <input v-model="password" class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="password" placeholder="••••••••" type="password" required />
+              <input v-model="password" autocomplete="current-password" class="glass-input w-full px-5 py-3.5 rounded-xl text-white placeholder-white/30 focus:ring-0" id="password" placeholder="••••••••" type="password" required />
             </div>
           </div>
 
