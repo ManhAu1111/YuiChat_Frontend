@@ -1,38 +1,86 @@
 <script setup>
-// Props nhận chatId và user để hiển thị theo API gốc
 const props = defineProps(['chatId', 'user']);
 const emit = defineEmits(['back']);
 </script>
 
 <template>
-  <div class="h-16 border-b border-gray-200 flex items-center justify-between px-4 flex-shrink-0 bg-white">
-    <div class="flex items-center">
-      <button @click="emit('back')" class="md:hidden p-2 mr-2 rounded-lg hover:bg-gray-100 hover:text-blue-600 text-gray-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+  <!--
+    Apple Design: ChatHeader
+    White bg, 64px height, subtle bottom border, 17px SF Pro text
+    Back button: mobile only, no hover bg ring
+    Action icons: Apple Blue on hover
+  -->
+  <div class="h-16 flex items-center justify-between px-5 flex-shrink-0 bg-white"
+       style="border-bottom: 1px solid rgba(0,0,0,0.08);">
+
+    <!-- Left: back + user info -->
+    <div class="flex items-center gap-3">
+      <!-- Back (mobile only) -->
+      <button
+        @click="emit('back')"
+        class="md:hidden -ml-1 p-1.5 rounded-full transition-colors hover:bg-black/5 text-apple-text-dark"
+        aria-label="Quay lại"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
       </button>
+
+      <!-- Avatar -->
       <div class="relative flex-shrink-0">
-        <img :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User')" alt="Avatar" class="w-10 h-10 rounded-full object-cover">
-        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
+        <img
+          :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&background=f5f5f7&color=1d1d1f'"
+          alt="Avatar"
+          class="w-9 h-9 rounded-full object-cover"
+          style="background: #f5f5f7;"
+        />
+        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white"
+             style="background: #32d74b;"></div>
       </div>
-      <div class="ml-3">
-        <h2 class="text-sm font-semibold text-gray-800">{{ user?.name || 'Đang tải...' }}</h2>
-        <p class="text-xs text-green-500">Đang hoạt động</p>
+
+      <!-- Name + status -->
+      <div>
+        <h2 class="font-semibold text-apple-text-dark leading-tight"
+            style="font-size: 15px; letter-spacing: -0.224px;">
+          {{ user?.name || 'Đang tải...' }}
+        </h2>
+        <p class="text-[11px]" style="color: #32d74b; letter-spacing: -0.08px;">Đang hoạt động</p>
       </div>
     </div>
 
-    <div class="flex items-center space-x-1.5 text-gray-500">
-      <button class="p-2 rounded-lg hover:bg-gray-100 hover:text-blue-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <!-- Right: action icons -->
+    <div class="flex items-center gap-1">
+      <button
+        class="p-2 rounded-full transition-colors hover:bg-black/5"
+        style="color: rgba(0,0,0,0.48);"
+        aria-label="Tìm kiếm"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
       </button>
-      <button class="p-2 rounded-lg hover:bg-gray-100 hover:text-blue-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+
+      <button
+        class="p-2 rounded-full transition-colors hover:bg-black/5"
+        style="color: rgba(0,0,0,0.48);"
+        aria-label="Gọi điện"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+        </svg>
       </button>
-      <button class="p-2 rounded-lg hover:bg-gray-100 hover:text-blue-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553 2.276A1 1 0 0120 13.118v3.764a1 1 0 01-.447.894L15 20M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-      </button>
-      <div class="w-px h-6 bg-gray-200 mx-1"></div>
-      <button class="p-2 rounded-lg hover:bg-gray-100 hover:text-red-600">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+
+      <button
+        class="p-2 rounded-full transition-colors hover:bg-black/5"
+        style="color: rgba(0,0,0,0.48);"
+        aria-label="Video call"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M15 10l4.553 2.276A1 1 0 0120 13.118v3.764a1 1 0 01-.447.894L15 20M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
       </button>
     </div>
   </div>

@@ -6,19 +6,14 @@ import ContactsPlaceholder from '../components/chat/ContactsPlaceholder.vue';
 import ProfilePlaceholder from '../components/chat/ProfilePlaceholder.vue';
 import SettingsPlaceholder from '../components/chat/SettingsPlaceholder.vue';
 import NotificationPanel from '../components/chat/NotificationPanel.vue';
-import AnimatedBackground from '../components/AnimatedBackground.vue';
 
-// 1. Nhớ import onMounted ở đây
 import { ref, onMounted } from 'vue';
-
-// 2. Import 2 store vào (đường dẫn này bạn tự chỉnh lại nếu thư mục của bạn khác nhé)
 import { useAuthStore } from '../stores/auth';
 import { useChatStore } from '../stores/chatStore';
 
 const selectedChatId = ref(null);
 const currentTab = ref('messages');
 
-// 3. Khởi tạo store
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 
@@ -26,7 +21,6 @@ const handleSelectChat = (chatId) => {
   selectedChatId.value = chatId;
 };
 
-// Hàm xử lý khi bấm nút Quay lại trên mobile
 const handleBackToList = () => {
   selectedChatId.value = null;
   currentTab.value = 'messages';
@@ -36,52 +30,81 @@ const handleTabChange = (tabId) => {
   currentTab.value = tabId;
 };
 
-// 4. Đặt onMounted ở cuối cùng của script setup
 onMounted(async () => {
-  // Ưu tiên load thông tin auth trước nếu chưa có
   if (!authStore.user) {
-    await authStore.fetchUser(); 
+    await authStore.fetchUser();
   }
-  // Sau đó mới load danh sách chat
   chatStore.fetchConversations();
 });
 </script>
 
 <template>
-  <div class="flex h-screen bg-black overflow-hidden font-sans relative">
-    <AnimatedBackground />
-    
-    <aside 
-      class="w-full md:w-[350px] glass-card border-r border-white/20 flex flex-col h-full relative z-10"
-      :class="(!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex'"
+  <!-- Apple Design: #000 base, sidebar #1d1d1f, main bg solid white/light -->
+  <div class="flex h-screen bg-apple-black overflow-hidden font-sans">
+
+    <!-- ── Sidebar ── -->
+    <aside
+      class="apple-sidebar flex flex-col h-full flex-shrink-0 transition-all duration-300"
+      :class="[
+        'w-full md:w-[320px]',
+        (!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex'
+      ]"
     >
-      <div class="flex-1 overflow-hidden flex flex-col text-white">
+      <!-- Sidebar Header — Apple nav glass style -->
+      <div class="apple-nav flex items-center px-5 h-14 flex-shrink-0 border-b"
+           style="border-color: rgba(255,255,255,0.07);">
+        <h1 class="font-display font-semibold text-white"
+            style="font-size: 21px; letter-spacing: 0.231px; line-height: 1.19;">
+          YuiChat
+        </h1>
+      </div>
+
+      <!-- Chat List fills remaining space -->
+      <div class="flex-1 overflow-hidden flex flex-col">
         <ChatList @select-chat="handleSelectChat" />
       </div>
 
+      <!-- Bottom Navigation floats in sidebar -->
       <BottomNav :currentTab="currentTab" @change-tab="handleTabChange" />
     </aside>
 
-    <main 
-      class="flex-1 flex-col glass-card relative z-10"
+    <!-- ── Main Area ── -->
+    <main
+      class="flex-1 flex flex-col overflow-hidden"
       :class="(selectedChatId || currentTab !== 'messages') ? 'flex' : 'hidden md:flex'"
+      style="background: #f5f5f7;"
     >
-      <ChatWindow v-if="currentTab === 'messages' && selectedChatId" :chatId="selectedChatId" @back="handleBackToList" />
-      
-      <ContactsPlaceholder v-else-if="currentTab === 'contacts'" @back="handleBackToList" />
-      
-      <NotificationPanel v-else-if="currentTab === 'notifications'" @back="handleBackToList" />
-      
-      <ProfilePlaceholder v-else-if="currentTab === 'profile'" @back="handleBackToList" />
-      
-      <SettingsPlaceholder v-else-if="currentTab === 'settings'" @back="handleBackToList" />
+      <!-- Chat window -->
+      <ChatWindow
+        v-if="currentTab === 'messages' && selectedChatId"
+        :chatId="selectedChatId"
+        @back="handleBackToList"
+      />
 
-      <div v-else class="h-full hidden md:flex flex-col items-center justify-center text-white/50 bg-black/20">
-        <div class="text-center">
-            <svg class="w-24 h-24 text-white/20 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-            <h2 class="text-3xl font-bold text-white tracking-tight">Chào mừng đến với YuiChat</h2>
-            <p class="text-white/60 mt-3 max-w-sm">Khám phá những tiện ích hỗ trợ làm việc và trò chuyện cùng người thân, bạn bè.</p>
+      <!-- Other tabs -->
+      <ContactsPlaceholder    v-else-if="currentTab === 'contacts'"      @back="handleBackToList" />
+      <NotificationPanel      v-else-if="currentTab === 'notifications'" @back="handleBackToList" />
+      <ProfilePlaceholder     v-else-if="currentTab === 'profile'"       @back="handleBackToList" />
+      <SettingsPlaceholder    v-else-if="currentTab === 'settings'"      @back="handleBackToList" />
+
+      <!-- Empty state — Apple style: centered, monochrome -->
+      <div v-else
+           class="hidden md:flex flex-col flex-1 items-center justify-center text-center p-12"
+           style="background: #f5f5f7;">
+        <div class="mb-8">
+          <svg class="w-20 h-20 mx-auto" fill="none" stroke="#c7c7cc" stroke-width="1.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
         </div>
+        <h2 class="font-display font-semibold mb-3"
+            style="font-size: 28px; line-height: 1.14; letter-spacing: 0.196px; color: #1d1d1f;">
+          Chào mừng đến YuiChat
+        </h2>
+        <p class="max-w-xs"
+           style="font-size: 17px; line-height: 1.47; letter-spacing: -0.374px; color: rgba(0,0,0,0.48);">
+          Chọn một cuộc trò chuyện ở bên trái để bắt đầu nhắn tin.
+        </p>
       </div>
     </main>
 

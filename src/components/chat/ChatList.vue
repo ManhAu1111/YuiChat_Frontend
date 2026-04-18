@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/auth';
 
@@ -15,21 +15,12 @@ onMounted(() => {
   chatStore.fetchConversations();
 });
 
-// Watch để tìm kiếm người dùng (Debounced)
 watch(searchQuery, (newVal) => {
   if (searchTimeout) clearTimeout(searchTimeout);
-
-  if (!newVal || newVal.trim() === '') {
-    chatStore.searchResults = [];
-    return;
-  }
-
-  searchTimeout = setTimeout(() => {
-    chatStore.searchUsers(newVal);
-  }, 400);
+  if (!newVal || newVal.trim() === '') { chatStore.searchResults = []; return; }
+  searchTimeout = setTimeout(() => { chatStore.searchUsers(newVal); }, 400);
 });
 
-// Đồng bộ hóa selectedId khi activeConversationId thay đổi (Ví dụ: khi khởi tạo hội thoại mới)
 watch(() => chatStore.activeConversationId, (newId) => {
   selectedId.value = newId;
 });
@@ -42,134 +33,176 @@ const selectChat = (id) => {
 const handleStartConversation = async (userId) => {
   try {
     const conversation = await chatStore.startConversation(userId);
-    searchQuery.value = ''; // Xóa thanh tìm kiếm
-    selectChat(conversation.id); // Tự động chọn phòng chat vừa mở
-  } catch (error) {
-    alert("Không thể bắt đầu trò chuyện!");
+    searchQuery.value = '';
+    selectChat(conversation.id);
+  } catch {
+    alert('Không thể bắt đầu trò chuyện!');
   }
 };
 
-// Hàm lấy thông tin "người kia" từ danh sách participants (dành cho chat 1-1)
 const getTargetUser = (conversation) => {
-  if (!conversation || !conversation.participants) return null;
+  if (!conversation?.participants) return null;
   if (conversation.is_group) return { name: conversation.name, avatar: conversation.avatar, is_online: false };
-
-  // Rất quan trọng: Phải kiểm tra authStore.user đã có dữ liệu chưa
-  if (!authStore.user || !authStore.user.id) return null;
-  
-  // Tìm người có user_id KHÁC với id của mình
+  if (!authStore.user?.id) return null;
   const participant = conversation.participants.find(p => p.user_id !== authStore.user.id);
   return participant ? participant.user : null;
 };
 
-// Hàm fortmat thời gian thân thiện (Chỉ làm đơn giản, sau này có thể dùng day.js)
 const formatTime = (dateStr) => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const now = new Date();
+  const diff = now - date;
+  if (diff < 60000) return 'Vừa xong';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}p`;
+  if (diff < 86400000) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 };
 </script>
 
 <template>
   <div class="flex flex-col h-full relative">
-    <div class="h-16 border-b border-gray-200 flex items-center px-4 space-x-2 relative z-50">
-      <div class="relative flex-1">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+    <!-- Search bar -->
+    <div class="px-4 py-3 flex-shrink-0" style="border-bottom: 1px solid rgba(255,255,255,0.07);">
+      <div class="relative">
+        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+              style="color: rgba(255,255,255,0.3);">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </span>
-        <input v-model="searchQuery" type="text" placeholder="Tìm kiếm người dùng..."
-          class="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-xs focus:outline-none focus:ring-1 focus:ring-blue-300 transition-all" />
+        <input
+          id="chat-search-input"
+          v-model="searchQuery"
+          type="text"
+          placeholder="Tìm kiếm..."
+          class="apple-input w-full pl-9 py-2.5 text-sm"
+        />
       </div>
 
-      <!-- Dropdown Kết quả tìm kiếm -->
+      <!-- Search results dropdown -->
       <div v-if="searchQuery && (chatStore.searchResults.length > 0 || chatStore.isSearching)"
-        class="absolute top-14 left-4 right-4 bg-white shadow-2xl rounded-2xl border border-gray-100 py-3 overflow-hidden animate-slide-down">
-        <div v-if="chatStore.isSearching" class="px-5 py-3 text-xs text-gray-400 flex items-center space-x-2">
-          <div class="animate-spin w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-          <span>Đang tìm kiếm...</span>
+           class="absolute left-4 right-4 top-[72px] z-50 rounded-[12px] py-2 overflow-hidden animate-slide-down"
+           style="background: #28282a; box-shadow: rgba(0,0,0,0.5) 0 8px 32px 0; border: 1px solid rgba(255,255,255,0.08);">
+
+        <div v-if="chatStore.isSearching" class="px-4 py-3 flex items-center gap-2"
+             style="color: rgba(255,255,255,0.4);">
+          <svg class="w-3.5 h-3.5 animate-spin-smooth" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          <span class="text-xs">Đang tìm kiếm...</span>
         </div>
 
-        <div v-else class="max-h-64 overflow-y-auto">
-          <div v-for="user in chatStore.searchResults" :key="user.id" @click="handleStartConversation(user.id)"
-            class="px-5 py-3 flex items-center hover:bg-blue-50 cursor-pointer transition-colors group">
-            <img :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name"
-              class="w-10 h-10 rounded-full bg-gray-100 object-cover" />
-            <div class="ml-3">
-              <p class="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">{{ user.name }}
-              </p>
-              <p class="text-[10px] text-gray-400">@{{ user.username }}</p>
+        <div v-else class="max-h-60 overflow-y-auto">
+          <button
+            v-for="user in chatStore.searchResults"
+            :key="user.id"
+            @click="handleStartConversation(user.id)"
+            class="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors"
+            style="border: none; background: transparent;"
+            onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+            onmouseout="this.style.background='transparent'"
+          >
+            <img
+              :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name + '&background=272729&color=fff'"
+              class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+            />
+            <div>
+              <p class="text-sm font-medium text-white" style="letter-spacing: -0.224px;">{{ user.name }}</p>
+              <p class="text-xs" style="color: rgba(255,255,255,0.4);">@{{ user.username }}</p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
-
-      <button
-        class="p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-blue-600 flex-shrink-0 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-      </button>
     </div>
 
+    <!-- Conversation list -->
     <div class="flex-1 overflow-y-auto">
-      <div v-if="chatStore.isLoading && chatStore.conversations.length === 0" class="flex justify-center p-10">
-        <div class="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-      </div>
 
-      <div v-else-if="chatStore.conversations.length === 0" class="text-center p-10 text-gray-400 text-sm italic">
-        Chưa có cuộc trò chuyện nào.
-      </div>
-
-      <div v-for="chat in chatStore.conversations" :key="chat.id" @click="selectChat(chat.id)"
-        class="flex items-center px-4 py-3 cursor-pointer border-l-4 transition-all"
-        :class="selectedId === chat.id ? 'bg-blue-50/50 border-blue-600' : 'border-transparent hover:bg-gray-50'">
-
-        <div class="relative flex-shrink-0">
-          <img :src="getTargetUser(chat)?.avatar || 'https://ui-avatars.com/api/?name=' + (getTargetUser(chat)?.name || 'U')"
-            alt="Avatar" class="w-12 h-12 rounded-full object-cover bg-gray-200">
-          <div v-if="getTargetUser(chat)?.is_online"
-            class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-        </div>
-
-        <div class="ml-3 flex-1 min-w-0">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-800 truncate">{{ getTargetUser(chat)?.name || 'Đang tải...' }}</h3>
-            <span class="text-[10px] text-gray-400 flex-shrink-0 ml-2">{{ formatTime(chat.last_message?.created_at ||
-              chat.updated_at) }}</span>
-          </div>
-          <div class="flex items-center justify-between mt-0.5">
-            <p class="text-xs text-gray-500 truncate" :class="{ 'font-medium text-gray-900': chat.unread > 0 }">
-              {{ chat.last_message ? chat.last_message.content : 'Hãy bắt đầu cuộc hội thoại...' }}
-            </p>
-            <span v-if="chat.unread > 0"
-              class="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full h-4 min-w-[16px] px-1 ml-2 flex-shrink-0">
-              {{ chat.unread > 9 ? '9+' : chat.unread }}
-            </span>
+      <!-- Loading skeleton -->
+      <div v-if="chatStore.isLoading && chatStore.conversations.length === 0" class="p-4 space-y-3">
+        <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-2 py-2">
+          <div class="w-11 h-11 rounded-full flex-shrink-0" style="background: rgba(255,255,255,0.06);"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-3 rounded-full w-3/5" style="background: rgba(255,255,255,0.06);"></div>
+            <div class="h-2.5 rounded-full w-4/5" style="background: rgba(255,255,255,0.04);"></div>
           </div>
         </div>
+      </div>
 
+      <!-- Empty state -->
+      <div v-else-if="chatStore.conversations.length === 0"
+           class="text-center py-16 px-6"
+           style="color: rgba(255,255,255,0.3);">
+        <svg class="w-10 h-10 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        <p class="text-sm">Chưa có cuộc trò chuyện nào.</p>
+        <p class="text-xs mt-1">Tìm kiếm để bắt đầu nhắn tin.</p>
+      </div>
+
+      <!-- List items -->
+      <div v-else>
+        <button
+          v-for="chat in chatStore.conversations"
+          :key="chat.id"
+          @click="selectChat(chat.id)"
+          class="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 relative"
+          :style="selectedId === chat.id
+            ? 'background: rgba(0,113,227,0.15);'
+            : 'background: transparent;'"
+          onmouseover="if (!this.classList.contains('selected')) this.style.background='rgba(255,255,255,0.04)'"
+          onmouseout="if (!this.classList.contains('selected')) this.style.background='transparent'"
+        >
+          <!-- Active indicator bar — Apple Blue -->
+          <div v-if="selectedId === chat.id"
+               class="absolute left-0 top-2 bottom-2 w-0.5 rounded-full"
+               style="background: #0071e3;"></div>
+
+          <!-- Avatar with online dot -->
+          <div class="relative flex-shrink-0">
+            <img
+              :src="getTargetUser(chat)?.avatar || 'https://ui-avatars.com/api/?name=' + (getTargetUser(chat)?.name || 'U') + '&background=272729&color=fff'"
+              alt="Avatar"
+              class="w-11 h-11 rounded-full object-cover"
+              style="background: #272729;"
+            />
+            <div v-if="getTargetUser(chat)?.is_online"
+                 class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2"
+                 style="background: #32d74b; border-color: #1d1d1f;"></div>
+          </div>
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-semibold truncate text-white"
+                  style="letter-spacing: -0.224px;">
+                {{ getTargetUser(chat)?.name || 'Đang tải...' }}
+              </h3>
+              <span class="text-[11px] flex-shrink-0 ml-2"
+                    style="color: rgba(255,255,255,0.3); letter-spacing: -0.08px;">
+                {{ formatTime(chat.last_message?.created_at || chat.updated_at) }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <p class="text-xs truncate" :class="chat.unread > 0 ? 'text-white' : ''"
+                 :style="chat.unread > 0 ? 'letter-spacing: -0.224px;' : 'color: rgba(255,255,255,0.4); letter-spacing: -0.224px;'">
+                {{ chat.last_message ? chat.last_message.content : 'Hãy bắt đầu cuộc hội thoại...' }}
+              </p>
+              <!-- Unread badge — Apple Blue -->
+              <span v-if="chat.unread > 0"
+                    class="flex-shrink-0 ml-2 flex items-center justify-center text-white text-[10px] font-semibold rounded-full min-w-[18px] h-[18px] px-1"
+                    style="background: #0071e3;">
+                {{ chat.unread > 9 ? '9+' : chat.unread }}
+              </span>
+            </div>
+          </div>
+        </button>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.animate-slide-down {
-  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>
