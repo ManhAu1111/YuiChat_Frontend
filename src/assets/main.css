@@ -2,50 +2,217 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ================================================
+   YuiChat — Apple Design System (DESIGN.md)
+   SF Pro / Inter · Monochrome Luxury
+   ================================================ */
+
 @layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    @apply bg-black text-white antialiased;
+    @apply bg-apple-black text-white font-sans;
+    /* Apple: negative letter-spacing at body size */
+    letter-spacing: -0.374px;
   }
 
   #app {
     @apply min-h-screen;
   }
+
+  /* Apple global focus ring — always Apple Blue, never default */
+  *:focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+  }
 }
 
-/* Hiệu ứng bong bóng lơ lửng */
-@keyframes float {
-  0% { transform: translateY(0px) translateX(0px); }
-  50% { transform: translateY(-30px) translateX(20px); }
-  100% { transform: translateY(0px) translateX(0px); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-.animate-float-delayed {
-  animation: float 8s ease-in-out infinite;
-  animation-delay: 2s;
-}
-.animate-float-slow {
-  animation: float 12s ease-in-out infinite;
-  animation-delay: 1s;
+@layer components {
+  /* ── Navigation Glass ── */
+  .apple-nav {
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  /* ── Sidebar Glass (dark surface) ── */
+  .apple-sidebar {
+    background: #1d1d1f;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Card surfaces ── */
+  .apple-card {
+    background: #272729;
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+  }
+
+  /* ── Light card (for list items on light bg) ── */
+  .apple-card-light {
+    background: #f5f5f7;
+    border-radius: 12px;
+    box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+  }
+
+  /* ── Primary CTA — Apple Blue ── */
+  .apple-btn {
+    @apply inline-flex items-center justify-center;
+    background: #0071e3;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: normal;
+    line-height: 1;
+    border: 1px solid transparent;
+    transition: filter 0.2s ease, transform 0.15s ease;
+  }
+  .apple-btn:hover {
+    filter: brightness(1.12);
+  }
+  .apple-btn:active {
+    transform: scale(0.97);
+    background: #0077ed;
+  }
+  .apple-btn:focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+  }
+
+  /* ── Pill CTA "Learn more" ── */
+  .apple-pill {
+    @apply inline-flex items-center justify-center;
+    border-radius: 980px;
+    padding: 8px 18px;
+    font-size: 17px;
+    font-weight: 400;
+    transition: background 0.2s ease;
+  }
+  .apple-pill-outline {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #fff;
+  }
+  .apple-pill-outline:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* ── Search / Filter input ── */
+  .apple-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-radius: 11px;
+    padding: 10px 16px;
+    font-size: 14px;
+    letter-spacing: -0.224px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .apple-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+  .apple-input:focus {
+    outline: none;
+    border-color: #0071e3;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* ── Light search input (white bg sections) ── */
+  .apple-input-light {
+    background: #fafafc;
+    border: 3px solid rgba(0, 0, 0, 0.04);
+    border-radius: 11px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: #1d1d1f;
+    letter-spacing: -0.224px;
+    transition: border-color 0.2s ease;
+  }
+  .apple-input-light:focus {
+    outline: none;
+    border-color: #0071e3;
+  }
+
+  /* ── Chat message bubbles ── */
+  .bubble-sent {
+    background: #0071e3;
+    color: #fff;
+    border-radius: 18px 18px 4px 18px;
+  }
+  .bubble-received {
+    background: #272729;
+    color: #fff;
+    border-radius: 18px 18px 18px 4px;
+  }
+
+  /* ── Typography helpers ── */
+  .apple-display {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1.07;
+    letter-spacing: -0.28px;
+  }
+  .apple-heading {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: 0.196px;
+  }
+  .apple-subheading {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    font-size: 21px;
+    font-weight: 400;
+    line-height: 1.19;
+    letter-spacing: 0.231px;
+  }
+  .apple-body {
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.374px;
+  }
+  .apple-caption {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.43;
+    letter-spacing: -0.224px;
+    color: rgba(255, 255, 255, 0.6);
+  }
 }
 
-/* Hiệu ứng Kính mờ (Glassmorphism) */
-.glass-card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-.glass-input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-}
-.glass-input:focus {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.4);
-  outline: none;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+@layer utilities {
+  /* ── Micro-animations ── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-slide-up {
+    animation: fadeSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-slide-down {
+    animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes spinSmooth {
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin-smooth {
+    animation: spinSmooth 0.9s linear infinite;
+  }
 }
