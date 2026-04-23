@@ -2,10 +2,13 @@
 import { onMounted, ref, watch } from 'vue';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/auth';
+import { useFriendshipStore } from '../../stores/friendshipStore';
+import FriendshipButton from './FriendshipButton.vue';
 
 const emit = defineEmits(['select-chat']);
 const chatStore = useChatStore();
 const authStore = useAuthStore();
+const friendshipStore = useFriendshipStore();
 const selectedId = ref(null);
 const searchQuery = ref('');
 
@@ -96,25 +99,36 @@ const formatTime = (dateStr) => {
           <span class="text-xs">Đang tìm kiếm...</span>
         </div>
 
-        <div v-else class="max-h-60 overflow-y-auto">
-          <button
+        <div v-else class="max-h-72 overflow-y-auto">
+          <div
             v-for="user in chatStore.searchResults"
             :key="user.id"
-            @click="handleStartConversation(user.id)"
-            class="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors"
-            style="border: none; background: transparent;"
-            onmouseover="this.style.background='rgba(255,255,255,0.06)'"
-            onmouseout="this.style.background='transparent'"
+            class="w-full px-4 py-2.5 flex items-center gap-3 text-left"
           >
-            <img
-              :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name + '&background=272729&color=fff'"
-              class="w-9 h-9 rounded-full object-cover flex-shrink-0"
-            />
-            <div>
-              <p class="text-sm font-medium text-white" style="letter-spacing: -0.224px;">{{ user.name }}</p>
-              <p class="text-xs" style="color: rgba(255,255,255,0.4);">@{{ user.username }}</p>
+            <!-- Avatar — click to open conversation -->
+            <button
+              class="flex items-center gap-3 flex-1 min-w-0 text-left transition-colors rounded-lg"
+              style="border: none; background: transparent; padding: 0;"
+              @click="handleStartConversation(user.id)"
+              onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+              onmouseout="this.style.background='transparent'"
+            >
+              <img
+                :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name + '&background=272729&color=fff'"
+                class="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                :alt="user.name"
+              />
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-white truncate" style="letter-spacing: -0.224px;">{{ user.name }}</p>
+                <p class="text-xs truncate" style="color: rgba(255,255,255,0.4);">@{{ user.username }}</p>
+              </div>
+            </button>
+
+            <!-- Friendship action buttons — inline in the dark sidebar context -->
+            <div class="flex-shrink-0">
+              <FriendshipButton :targetUserId="user.id" />
             </div>
-          </button>
+          </div>
         </div>
       </div>
     </div>
