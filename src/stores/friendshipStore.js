@@ -60,7 +60,7 @@ export const useFriendshipStore = defineStore('friendship', {
       this.error = null;
       try {
         const response = await api.get('/friendship-states');
-        const data = response.data;
+        const data = response.data.data;
         this.friendshipStates = {
           accepted: (data.accepted ?? []).map(String),
           pending_sent: (data.pending_sent ?? []).map(String),
