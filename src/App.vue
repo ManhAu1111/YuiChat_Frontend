@@ -3,9 +3,11 @@ import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import { useFriendshipStore } from './stores/friendshipStore';
+import { useNotificationStore } from './stores/notificationStore';
 
 const authStore = useAuthStore();
 const friendshipStore = useFriendshipStore();
+const notificationStore = useNotificationStore();
 
 onMounted(async () => {
   // Only bootstrap when the user already has a saved token (page refresh).
@@ -17,11 +19,14 @@ onMounted(async () => {
     await authStore.fetchUser();
   }
 
-  // 2. Hydrate friendship states from the server
+  // 2. Hydrate friendship and notification states from the server
   await friendshipStore.fetchStates();
+  await notificationStore.fetchNotifications();
+  await notificationStore.fetchUnreadCount();
 
   // 3. Start the real-time listener so we get live updates while online
   friendshipStore.listenForRealTimeUpdates(authStore.user?.id);
+  notificationStore.listenForRealTimeUpdates(authStore.user?.id);
 });
 </script>
 
