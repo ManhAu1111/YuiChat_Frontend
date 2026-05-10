@@ -34,16 +34,20 @@ window.Pusher = Pusher;
 const currentHost = api.defaults.baseURL.replace('/api', '');
 
 window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: '2b6e525603607489d3b1',
-    cluster: 'ap1',
-    forceTLS: true,
-    authEndpoint: `${currentHost}/broadcasting/auth`, 
-    auth: {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+  broadcaster: 'reverb',
+  key: import.meta.env.VITE_REVERB_APP_KEY,
+  wsHost: currentHost.replace('http://', '').replace('https://', '').split(':')[0],
+  wsPort: 8080,
+  wssPort: 8080,
+  forceTLS: false,
+  disableStats: true,
+  enabledTransports: ['ws', 'wss'],
+  authEndpoint: `${currentHost}/broadcasting/auth`,
+  auth: {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
     }
+  }
 });
 
 export default api;

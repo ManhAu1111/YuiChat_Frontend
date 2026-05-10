@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useNotificationStore } from '../../stores/notificationStore';
 
 const props = defineProps({
   currentTab: { type: String, required: true }
 });
 
 const emit = defineEmits(['change-tab']);
+const notificationStore = useNotificationStore();
 
 const tabs = [
   {
@@ -78,10 +80,12 @@ const changeTab = (tabId) => {
           {{ tab.name }}
         </span>
 
-        <!-- Notification dot on Notifications tab -->
-        <span v-if="tab.id === 'notifications'"
-              class="absolute top-1.5 left-1/2 translate-x-1.5 w-1.5 h-1.5 rounded-full"
-              style="background: #ff3b30;"></span>
+        <!-- Notification badge on Notifications tab -->
+        <span v-if="tab.id === 'notifications' && notificationStore.unreadCount > 0"
+              class="absolute top-0.5 right-1.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold"
+              style="background: #ff3b30; box-shadow: 0 0 0 2px #1d1d1f;">
+          {{ notificationStore.unreadCount > 99 ? '99+' : notificationStore.unreadCount }}
+        </span>
       </button>
     </div>
   </nav>
