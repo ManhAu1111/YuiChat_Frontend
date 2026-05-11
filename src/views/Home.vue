@@ -19,6 +19,7 @@ const chatStore = useChatStore();
 
 const handleSelectChat = (chatId) => {
   selectedChatId.value = chatId;
+  currentTab.value = 'messages';
 };
 
 const handleBackToList = () => {
