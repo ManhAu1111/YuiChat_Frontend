@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '../../stores/notificationStore';
+import { useThemeStore } from '../../stores/themeStore';
 
 const props = defineProps({
   currentTab: { type: String, required: true }
@@ -8,6 +9,7 @@ const props = defineProps({
 
 const emit = defineEmits(['change-tab']);
 const notificationStore = useNotificationStore();
+const themeStore = useThemeStore();
 
 const tabs = [
   {
@@ -44,12 +46,10 @@ const changeTab = (tabId) => {
 
 <template>
   <!--
-    Apple Design Navigation:
-    Left sidebar bottom tab bar — compact, vertical, monochrome
-    Active: Apple Blue icon + label, subtle #28282a background pill
-    Inactive: rgba(white, 0.35) icon color
+    Apple Design Navigation hỗ trợ chuyển đổi Sáng/Tối
   -->
-  <nav class="flex-shrink-0 px-3 py-3" style="border-top: 1px solid rgba(255,255,255,0.07);">
+  <nav class="flex-shrink-0 px-3 py-3 transition-colors duration-300"
+       :style="themeStore.isDark ? 'border-top: 1px solid rgba(255,255,255,0.07);' : 'border-top: 1px solid rgba(0,0,0,0.08);'">
     <div class="flex items-center justify-between">
       <button
         v-for="tab in tabs"
@@ -67,7 +67,7 @@ const changeTab = (tabId) => {
           class="transition-colors duration-200"
           :style="currentTab === tab.id
             ? 'color: #0071e3;'
-            : 'color: rgba(255,255,255,0.35);'"
+            : (themeStore.isDark ? 'color: rgba(255,255,255,0.35);' : 'color: rgba(0,0,0,0.48);')"
         ></span>
 
         <!-- Label -->
@@ -75,15 +75,16 @@ const changeTab = (tabId) => {
           class="text-[9px] font-medium transition-colors duration-200 leading-none"
           :style="currentTab === tab.id
             ? 'color: #0071e3;'
-            : 'color: rgba(255,255,255,0.35);'"
+            : (themeStore.isDark ? 'color: rgba(255,255,255,0.35);' : 'color: rgba(0,0,0,0.48);')"
         >
           {{ tab.name }}
         </span>
 
         <!-- Notification badge on Notifications tab -->
         <span v-if="tab.id === 'notifications' && notificationStore.unreadCount > 0"
-              class="absolute top-0.5 right-1.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold"
-              style="background: #ff3b30; box-shadow: 0 0 0 2px #1d1d1f;">
+              class="absolute top-0.5 right-1.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold transition-shadow duration-300"
+              style="background: #ff3b30;"
+              :style="themeStore.isDark ? 'box-shadow: 0 0 0 2px #1d1d1f;' : 'box-shadow: 0 0 0 2px #ffffff;'">
           {{ notificationStore.unreadCount > 99 ? '99+' : notificationStore.unreadCount }}
         </span>
       </button>
