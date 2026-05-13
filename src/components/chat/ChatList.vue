@@ -3,12 +3,14 @@ import { onMounted, ref, watch } from 'vue';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/auth';
 import { useFriendshipStore } from '../../stores/friendshipStore';
+import { useThemeStore } from '../../stores/themeStore';
 import FriendshipButton from './FriendshipButton.vue';
 
 const emit = defineEmits(['select-chat']);
 const chatStore = useChatStore();
 const authStore = useAuthStore();
 const friendshipStore = useFriendshipStore();
+const themeStore = useThemeStore();
 const selectedId = ref(null);
 const searchQuery = ref('');
 
@@ -61,16 +63,37 @@ const formatTime = (dateStr) => {
   if (diff < 86400000) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 };
+
+const handleMouseOver = (event, isSelected) => {
+  if (!isSelected) {
+    event.currentTarget.style.background = themeStore.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
+  }
+};
+
+const handleMouseOut = (event, isSelected) => {
+  if (!isSelected) {
+    event.currentTarget.style.background = 'transparent';
+  }
+};
+
+const handleSearchMouseOver = (event) => {
+  event.currentTarget.style.background = themeStore.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+};
+
+const handleSearchMouseOut = (event) => {
+  event.currentTarget.style.background = 'transparent';
+};
 </script>
 
 <template>
-  <div class="flex flex-col h-full relative">
+  <div class="flex flex-col h-full relative transition-colors duration-300">
 
     <!-- Search bar -->
-    <div class="px-4 py-3 flex-shrink-0" style="border-bottom: 1px solid rgba(255,255,255,0.07);">
+    <div class="px-4 py-3 flex-shrink-0 transition-colors duration-300"
+         :style="themeStore.isDark ? 'border-bottom: 1px solid rgba(255,255,255,0.07);' : 'border-bottom: 1px solid rgba(0,0,0,0.08);'">
       <div class="relative">
-        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
-              style="color: rgba(255,255,255,0.3);">
+        <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none transition-colors duration-300"
+              :style="themeStore.isDark ? 'color: rgba(255,255,255,0.3);' : 'color: rgba(0,0,0,0.4);'">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -81,17 +104,20 @@ const formatTime = (dateStr) => {
           v-model="searchQuery"
           type="text"
           placeholder="Tìm kiếm..."
-          class="apple-input w-full pl-9 py-2.5 text-sm"
+          class="w-full pl-9 py-2.5 text-sm transition-all duration-300"
+          :class="themeStore.isDark ? 'apple-input' : 'apple-input-light'"
         />
       </div>
 
       <!-- Search results dropdown -->
       <div v-if="searchQuery && (chatStore.searchResults.length > 0 || chatStore.isSearching)"
-           class="absolute left-4 right-4 top-[72px] z-50 rounded-[12px] py-2 overflow-hidden animate-slide-down"
-           style="background: #28282a; box-shadow: rgba(0,0,0,0.5) 0 8px 32px 0; border: 1px solid rgba(255,255,255,0.08);">
+           class="absolute left-4 right-4 top-[72px] z-50 rounded-[12px] py-2 overflow-hidden animate-slide-down transition-all duration-300"
+           :style="themeStore.isDark
+             ? 'background: #28282a; box-shadow: rgba(0,0,0,0.5) 0 8px 32px 0; border: 1px solid rgba(255,255,255,0.08);'
+             : 'background: #ffffff; box-shadow: rgba(0,0,0,0.12) 0 8px 32px 0; border: 1px solid rgba(0,0,0,0.08);'">
 
-        <div v-if="chatStore.isSearching" class="px-4 py-3 flex items-center gap-2"
-             style="color: rgba(255,255,255,0.4);">
+        <div v-if="chatStore.isSearching" class="px-4 py-3 flex items-center gap-2 transition-colors duration-300"
+             :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.4);'">
           <svg class="w-3.5 h-3.5 animate-spin-smooth" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -110,21 +136,28 @@ const formatTime = (dateStr) => {
               class="flex items-center gap-3 flex-1 min-w-0 text-left transition-colors rounded-lg"
               style="border: none; background: transparent; padding: 0;"
               @click="handleStartConversation(user.id)"
-              onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-              onmouseout="this.style.background='transparent'"
+              @mouseover="handleSearchMouseOver"
+              @mouseout="handleSearchMouseOut"
             >
               <img
-                :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name + '&background=272729&color=fff'"
+                :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name + '&background=' + (themeStore.isDark ? '272729' : 'e9e9eb') + '&color=' + (themeStore.isDark ? 'fff' : '1d1d1f')"
                 class="w-9 h-9 rounded-full object-cover flex-shrink-0"
                 :alt="user.name"
               />
               <div class="min-w-0">
-                <p class="text-sm font-medium text-white truncate" style="letter-spacing: -0.224px;">{{ user.name }}</p>
-                <p class="text-xs truncate" style="color: rgba(255,255,255,0.4);">@{{ user.username }}</p>
+                <p class="text-sm font-medium truncate transition-colors duration-300"
+                   style="letter-spacing: -0.224px;"
+                   :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
+                  {{ user.name }}
+                </p>
+                <p class="text-xs truncate transition-colors duration-300"
+                   :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.4);'">
+                  @{{ user.username }}
+                </p>
               </div>
             </button>
 
-            <!-- Friendship action buttons — inline in the dark sidebar context -->
+            <!-- Friendship action buttons -->
             <div class="flex-shrink-0">
               <FriendshipButton :targetUserId="user.id" />
             </div>
@@ -139,18 +172,21 @@ const formatTime = (dateStr) => {
       <!-- Loading skeleton -->
       <div v-if="chatStore.isLoading && chatStore.conversations.length === 0" class="p-4 space-y-3">
         <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-2 py-2">
-          <div class="w-11 h-11 rounded-full flex-shrink-0" style="background: rgba(255,255,255,0.06);"></div>
+          <div class="w-11 h-11 rounded-full flex-shrink-0 transition-colors duration-300"
+               :style="themeStore.isDark ? 'background: rgba(255,255,255,0.06);' : 'background: rgba(0,0,0,0.05);'"></div>
           <div class="flex-1 space-y-2">
-            <div class="h-3 rounded-full w-3/5" style="background: rgba(255,255,255,0.06);"></div>
-            <div class="h-2.5 rounded-full w-4/5" style="background: rgba(255,255,255,0.04);"></div>
+            <div class="h-3 rounded-full w-3/5 transition-colors duration-300"
+                 :style="themeStore.isDark ? 'background: rgba(255,255,255,0.06);' : 'background: rgba(0,0,0,0.05);'"></div>
+            <div class="h-2.5 rounded-full w-4/5 transition-colors duration-300"
+                 :style="themeStore.isDark ? 'background: rgba(255,255,255,0.04);' : 'background: rgba(0,0,0,0.03);'"></div>
           </div>
         </div>
       </div>
 
       <!-- Empty state -->
       <div v-else-if="chatStore.conversations.length === 0"
-           class="text-center py-16 px-6"
-           style="color: rgba(255,255,255,0.3);">
+           class="text-center py-16 px-6 transition-colors duration-300"
+           :style="themeStore.isDark ? 'color: rgba(255,255,255,0.3);' : 'color: rgba(0,0,0,0.4);'">
         <svg class="w-10 h-10 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
@@ -166,11 +202,12 @@ const formatTime = (dateStr) => {
           :key="chat.id"
           @click="selectChat(chat.id)"
           class="w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-150 relative"
+          :class="{ 'selected': selectedId === chat.id }"
           :style="selectedId === chat.id
             ? 'background: rgba(0,113,227,0.15);'
             : 'background: transparent;'"
-          onmouseover="if (!this.classList.contains('selected')) this.style.background='rgba(255,255,255,0.04)'"
-          onmouseout="if (!this.classList.contains('selected')) this.style.background='transparent'"
+          @mouseover="handleMouseOver($event, selectedId === chat.id)"
+          @mouseout="handleMouseOut($event, selectedId === chat.id)"
         >
           <!-- Active indicator bar — Apple Blue -->
           <div v-if="selectedId === chat.id"
@@ -180,31 +217,37 @@ const formatTime = (dateStr) => {
           <!-- Avatar with online dot -->
           <div class="relative flex-shrink-0">
             <img
-              :src="getTargetUser(chat)?.avatar || 'https://ui-avatars.com/api/?name=' + (getTargetUser(chat)?.name || 'U') + '&background=272729&color=fff'"
+              :src="getTargetUser(chat)?.avatar || 'https://ui-avatars.com/api/?name=' + (getTargetUser(chat)?.name || 'U') + '&background=' + (themeStore.isDark ? '272729' : 'e9e9eb') + '&color=' + (themeStore.isDark ? 'fff' : '1d1d1f')"
               alt="Avatar"
-              class="w-11 h-11 rounded-full object-cover"
-              style="background: #272729;"
+              class="w-11 h-11 rounded-full object-cover transition-colors duration-300"
+              :style="themeStore.isDark ? 'background: #272729;' : 'background: #e9e9eb;'"
             />
             <div v-if="getTargetUser(chat)?.is_online"
-                 class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2"
-                 style="background: #32d74b; border-color: #1d1d1f;"></div>
+                 class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors duration-300"
+                 style="background: #32d74b;"
+                 :style="themeStore.isDark ? 'border-color: #1d1d1f;' : 'border-color: #ffffff;'"></div>
           </div>
 
           <!-- Info -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between mb-0.5">
-              <h3 class="text-sm font-semibold truncate text-white"
-                  style="letter-spacing: -0.224px;">
+              <h3 class="text-sm font-semibold truncate transition-colors duration-300"
+                  style="letter-spacing: -0.224px;"
+                  :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
                 {{ getTargetUser(chat)?.name || 'Đang tải...' }}
               </h3>
-              <span class="text-[11px] flex-shrink-0 ml-2"
-                    style="color: rgba(255,255,255,0.3); letter-spacing: -0.08px;">
+              <span class="text-[11px] flex-shrink-0 ml-2 transition-colors duration-300"
+                    style="letter-spacing: -0.08px;"
+                    :style="themeStore.isDark ? 'color: rgba(255,255,255,0.3);' : 'color: rgba(0,0,0,0.4);'">
                 {{ formatTime(chat.last_message?.created_at || chat.updated_at) }}
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <p class="text-xs truncate" :class="chat.unread > 0 ? 'text-white' : ''"
-                 :style="chat.unread > 0 ? 'letter-spacing: -0.224px;' : 'color: rgba(255,255,255,0.4); letter-spacing: -0.224px;'">
+              <p class="text-xs truncate transition-colors duration-300"
+                 style="letter-spacing: -0.224px;"
+                 :style="chat.unread > 0
+                   ? (themeStore.isDark ? 'color: #ffffff; font-weight: 600;' : 'color: #1d1d1f; font-weight: 600;')
+                   : (themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.5);')">
                 {{ chat.last_message ? chat.last_message.content : 'Hãy bắt đầu cuộc hội thoại...' }}
               </p>
               <!-- Unread badge — Apple Blue -->

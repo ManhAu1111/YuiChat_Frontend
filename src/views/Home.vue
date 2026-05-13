@@ -42,22 +42,30 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- Apple Design: #000 base, sidebar #1d1d1f, main bg solid white/light -->
-  <div class="flex h-screen bg-apple-black overflow-hidden font-sans">
+  <!-- Apple Design: Hỗ trợ chuyển đổi Sáng/Tối mượt mà -->
+  <div class="flex h-screen overflow-hidden font-sans transition-colors duration-300"
+       :style="themeStore.isDark ? 'background: #000000;' : 'background: #ffffff;'">
 
     <!-- ── Sidebar ── -->
     <aside
-      class="apple-sidebar flex flex-col h-full flex-shrink-0 transition-all duration-300"
+      class="flex flex-col h-full flex-shrink-0 transition-all duration-300"
       :class="[
         'w-full md:w-[320px]',
-        (!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex'
+        (!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex',
+        themeStore.isDark ? 'dark-surface' : ''
       ]"
+      :style="themeStore.isDark
+        ? 'background: #1d1d1f; border-right: 1px solid rgba(255,255,255,0.08);'
+        : 'background: #f5f5f7; border-right: 1px solid rgba(0,0,0,0.08);'"
     >
-      <!-- Sidebar Header — Apple nav glass style -->
-      <div class="apple-nav flex items-center px-5 h-14 flex-shrink-0 border-b"
-           style="border-color: rgba(255,255,255,0.07);">
-        <h1 class="font-display font-semibold text-white"
-            style="font-size: 21px; letter-spacing: 0.231px; line-height: 1.19;">
+      <!-- Sidebar Header -->
+      <div class="flex items-center px-5 h-14 flex-shrink-0 border-b transition-colors duration-300"
+           :style="themeStore.isDark
+             ? 'background: rgba(0,0,0,0.82); border-color: rgba(255,255,255,0.07); backdrop-filter: saturate(180%) blur(20px);'
+             : 'background: rgba(245,245,247,0.82); border-color: rgba(0,0,0,0.08); backdrop-filter: saturate(180%) blur(20px);'">
+        <h1 class="font-display font-semibold transition-colors duration-300"
+            style="font-size: 21px; letter-spacing: 0.231px; line-height: 1.19;"
+            :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
           YuiChat
         </h1>
       </div>

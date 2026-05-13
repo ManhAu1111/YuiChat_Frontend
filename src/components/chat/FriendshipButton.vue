@@ -318,18 +318,22 @@ async function handleUnfriend() {
  * .dark-surface class to enable these overrides.
  */
 :global(.apple-sidebar) .fb-btn--ghost,
-:global(.apple-sidebar) .fb-btn--secondary {
+:global(.dark-surface) .fb-btn--ghost,
+:global(.apple-sidebar) .fb-btn--secondary,
+:global(.dark-surface) .fb-btn--secondary {
   color: rgba(255, 255, 255, 0.55);
   border-color: rgba(255, 255, 255, 0.15);
 }
 
-:global(.apple-sidebar) .fb-btn--ghost:not(:disabled):hover {
+:global(.apple-sidebar) .fb-btn--ghost:not(:disabled):hover,
+:global(.dark-surface) .fb-btn--ghost:not(:disabled):hover {
   background: rgba(255, 255, 255, 0.07);
   border-color: rgba(255, 255, 255, 0.25);
   color: rgba(255, 255, 255, 0.8);
 }
 
-:global(.apple-sidebar) .fb-btn--requested {
+:global(.apple-sidebar) .fb-btn--requested,
+:global(.dark-surface) .fb-btn--requested {
   background: rgba(0, 113, 227, 0.18);
   color: #2997ff; /* bright blue for dark bg per DESIGN.md */
   border-color: rgba(41, 151, 255, 0.3);
