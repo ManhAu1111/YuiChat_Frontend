@@ -4,10 +4,13 @@ import { RouterView } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import { useFriendshipStore } from './stores/friendshipStore';
 import { useNotificationStore } from './stores/notificationStore';
+import { useThemeStore } from './stores/themeStore';
 
 const authStore = useAuthStore();
 const friendshipStore = useFriendshipStore();
 const notificationStore = useNotificationStore();
+const themeStore = useThemeStore();
+
 
 onMounted(async () => {
   // Only bootstrap when the user already has a saved token (page refresh).

@@ -1,9 +1,11 @@
 <script setup>
 import { ref } from 'vue';
 import { useChatStore } from '../../stores/chatStore';
+import { useThemeStore } from '../../stores/themeStore';
 
 const props = defineProps(['conversationId']);
 const chatStore = useChatStore();
+const themeStore = useThemeStore();
 const messageText = ref('');
 const isSending = ref(false);
 
@@ -26,15 +28,15 @@ const sendMessage = async () => {
 
 <template>
   <!--
-    Apple ChatInput: white bar, thin top border, pill input, Apple Blue send icon
+    Apple ChatInput hỗ trợ Dark Theme
   -->
-  <div class="flex items-center gap-3 px-4 py-3 bg-white flex-shrink-0"
-       style="border-top: 1px solid rgba(0,0,0,0.08);">
+  <div class="flex items-center gap-3 px-4 py-3 flex-shrink-0 transition-colors duration-300"
+       :style="themeStore.isDark ? 'background: #1d1d1f; border-top: 1px solid rgba(255,255,255,0.08);' : 'background: #ffffff; border-top: 1px solid rgba(0,0,0,0.08);'">
 
     <!-- Attachment button -->
     <button
       class="flex-shrink-0 p-2 rounded-full transition-colors"
-      style="color: rgba(0,0,0,0.35);"
+      :style="themeStore.isDark ? 'color: rgba(255,255,255,0.5);' : 'color: rgba(0,0,0,0.35);'"
       aria-label="Đính kèm tệp"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,15 +53,12 @@ const sendMessage = async () => {
         v-model="messageText"
         @keyup.enter="sendMessage"
         placeholder="Nhập tin nhắn..."
-        class="w-full px-4 py-2.5 pr-11 rounded-apple-pill text-sm bg-[#f5f5f7] outline-none transition-all"
-        style="
-          border: 1px solid transparent;
-          color: #1d1d1f;
-          letter-spacing: -0.224px;
-          line-height: 1.47;
-        "
-        onfocus="this.style.borderColor='#0071e3'; this.style.background='#fff';"
-        onblur="this.style.borderColor='transparent'; this.style.background='#f5f5f7';"
+        class="w-full px-4 py-2.5 pr-11 rounded-apple-pill text-sm outline-none transition-all duration-300"
+        :style="themeStore.isDark
+          ? 'background: #272729; color: #ffffff; border: 1px solid transparent; letter-spacing: -0.224px; line-height: 1.47;'
+          : 'background: #f5f5f7; color: #1d1d1f; border: 1px solid transparent; letter-spacing: -0.224px; line-height: 1.47;'"
+        onfocus="this.style.borderColor='#0071e3'; if(this.style.background.includes('27')) this.style.background='#2a2a2d'; else this.style.background='#fff';"
+        onblur="this.style.borderColor='transparent'; if(this.style.color.includes('fff')) this.style.background='#272729'; else this.style.background='#f5f5f7';"
       />
 
       <!-- Send button — Apple Blue, visible when text present -->
