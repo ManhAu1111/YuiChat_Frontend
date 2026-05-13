@@ -1,12 +1,16 @@
 <script setup>
+import { useThemeStore } from '../../stores/themeStore';
+
 const emit = defineEmits(['back']);
+const themeStore = useThemeStore();
 </script>
 
 <template>
-  <div class="relative flex flex-col h-full" style="background: #f5f5f7;">
+  <div class="relative flex flex-col h-full transition-colors duration-300"
+       :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'">
     <button
-      class="md:hidden absolute top-4 left-4 p-2 rounded-full hover:bg-black/5 transition-colors"
-      style="color: rgba(0,0,0,0.48);"
+      class="md:hidden absolute top-4 left-4 p-2 rounded-full transition-colors z-10"
+      :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08);' : 'color: rgba(0,0,0,0.48); background: rgba(0,0,0,0.05);'"
       @click="emit('back')"
       aria-label="Quay lại"
     >
@@ -15,20 +19,23 @@ const emit = defineEmits(['back']);
       </svg>
     </button>
 
-    <div class="flex flex-col items-center justify-center flex-1 text-center px-8">
-      <div class="w-16 h-16 rounded-full flex items-center justify-center mb-6"
-           style="background: rgba(0,0,0,0.06);">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-             style="color: rgba(0,0,0,0.24);">
+    <div class="flex flex-col items-center justify-center flex-1 text-center px-8 transition-colors duration-300">
+      <div class="w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-colors duration-300"
+           :style="themeStore.isDark ? 'background: rgba(255,255,255,0.08);' : 'background: rgba(0,0,0,0.06);'">
+        <svg class="w-8 h-8 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+             :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.24);'">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
                 d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
       </div>
-      <h3 class="font-display font-semibold mb-2"
-          style="font-size: 21px; line-height: 1.19; letter-spacing: 0.231px; color: #1d1d1f;">
+      <h3 class="font-display font-semibold mb-2 transition-colors duration-300"
+          style="font-size: 21px; line-height: 1.19; letter-spacing: 0.231px;"
+          :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
         Danh bạ
       </h3>
-      <p class="text-sm" style="color: rgba(0,0,0,0.4); letter-spacing: -0.224px;">
+      <p class="text-sm transition-colors duration-300"
+         style="letter-spacing: -0.224px;"
+         :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.4);'">
         Tính năng đang phát triển
       </p>
     </div>

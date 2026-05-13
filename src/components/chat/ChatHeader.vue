@@ -1,24 +1,25 @@
 <script setup>
+import { useThemeStore } from '../../stores/themeStore';
+
 const props = defineProps(['chatId', 'user']);
 const emit = defineEmits(['back']);
+const themeStore = useThemeStore();
 </script>
 
 <template>
   <!--
-    Apple Design: ChatHeader
-    White bg, 64px height, subtle bottom border, 17px SF Pro text
-    Back button: mobile only, no hover bg ring
-    Action icons: Apple Blue on hover
+    Apple Design: ChatHeader hỗ trợ Dark Theme
   -->
-  <div class="h-16 flex items-center justify-between px-5 flex-shrink-0 bg-white"
-       style="border-bottom: 1px solid rgba(0,0,0,0.08);">
+  <div class="h-16 flex items-center justify-between px-5 flex-shrink-0 transition-colors duration-300"
+       :style="themeStore.isDark ? 'background: #1d1d1f; border-bottom: 1px solid rgba(255,255,255,0.08);' : 'background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.08);'">
 
     <!-- Left: back + user info -->
     <div class="flex items-center gap-3">
       <!-- Back (mobile only) -->
       <button
         @click="emit('back')"
-        class="md:hidden -ml-1 p-1.5 rounded-full transition-colors hover:bg-black/5 text-apple-text-dark"
+        class="md:hidden -ml-1 p-1.5 rounded-full transition-colors"
+        :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'"
         aria-label="Quay lại"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,17 +32,18 @@ const emit = defineEmits(['back']);
         <img
           :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&background=f5f5f7&color=1d1d1f'"
           alt="Avatar"
-          class="w-9 h-9 rounded-full object-cover"
-          style="background: #f5f5f7;"
+          class="w-9 h-9 rounded-full object-cover transition-colors duration-300"
+          :style="themeStore.isDark ? 'background: #272729;' : 'background: #f5f5f7;'"
         />
-        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white"
-             style="background: #32d74b;"></div>
+        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors duration-300"
+             :style="themeStore.isDark ? 'background: #32d74b; border-color: #1d1d1f;' : 'background: #32d74b; border-color: #ffffff;'"></div>
       </div>
 
       <!-- Name + status -->
       <div>
-        <h2 class="font-semibold text-apple-text-dark leading-tight"
-            style="font-size: 15px; letter-spacing: -0.224px;">
+        <h2 class="font-semibold leading-tight transition-colors duration-300"
+            style="font-size: 15px; letter-spacing: -0.224px;"
+            :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
           {{ user?.name || 'Đang tải...' }}
         </h2>
         <p class="text-[11px]" style="color: #32d74b; letter-spacing: -0.08px;">Đang hoạt động</p>
@@ -51,8 +53,8 @@ const emit = defineEmits(['back']);
     <!-- Right: action icons -->
     <div class="flex items-center gap-1">
       <button
-        class="p-2 rounded-full transition-colors hover:bg-black/5"
-        style="color: rgba(0,0,0,0.48);"
+        class="p-2 rounded-full transition-colors"
+        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
         aria-label="Tìm kiếm"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,8 +64,8 @@ const emit = defineEmits(['back']);
       </button>
 
       <button
-        class="p-2 rounded-full transition-colors hover:bg-black/5"
-        style="color: rgba(0,0,0,0.48);"
+        class="p-2 rounded-full transition-colors"
+        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
         aria-label="Gọi điện"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,8 +75,8 @@ const emit = defineEmits(['back']);
       </button>
 
       <button
-        class="p-2 rounded-full transition-colors hover:bg-black/5"
-        style="color: rgba(0,0,0,0.48);"
+        class="p-2 rounded-full transition-colors"
+        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
         aria-label="Video call"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

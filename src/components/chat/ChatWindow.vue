@@ -1,7 +1,8 @@
 <script setup>
 import { onMounted, watch, nextTick, ref, computed } from 'vue';
-import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/auth';
+import { useChatStore } from '../../stores/chatStore';
+import { useThemeStore } from '../../stores/themeStore';
 import ChatHeader from './ChatHeader.vue';
 import ChatInput from './ChatInput.vue';
 
@@ -10,6 +11,7 @@ const emit = defineEmits(['back']);
 
 const chatStore = useChatStore();
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 const messageContainer = ref(null);
 
 const currentConversation = computed(() =>
@@ -61,27 +63,30 @@ const shouldShowAvatar = (idx) => {
     Sent bubbles: Apple Blue #0071e3
     Received: #e9e9eb (light gray, no shadow)
   -->
-  <div class="flex flex-col h-full bg-white">
+  <div class="flex flex-col h-full transition-colors duration-300"
+       :style="themeStore.isDark ? 'background: #000000;' : 'background: #ffffff;'">
     <ChatHeader :chatId="chatId" :user="targetUser" @back="emit('back')" />
 
     <!-- Messages area -->
     <div
       ref="messageContainer"
-      class="flex-1 overflow-y-auto px-5 py-6 space-y-1"
-      style="background: #f5f5f7;"
+      class="flex-1 overflow-y-auto px-5 py-6 space-y-1 transition-colors duration-300"
+      :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'"
     >
       <!-- Empty state -->
       <div v-if="chatStore.currentMessages.length === 0"
            class="flex flex-col items-center justify-center h-full text-center py-12">
-        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-             style="background: rgba(0,0,0,0.06);">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-               style="color: rgba(0,0,0,0.24);">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-colors duration-300"
+             :style="themeStore.isDark ? 'background: rgba(255,255,255,0.08);' : 'background: rgba(0,0,0,0.06);'">
+          <svg class="w-7 h-7 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.24);'">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
           </svg>
         </div>
-        <p class="text-sm font-medium" style="color: rgba(0,0,0,0.48); letter-spacing: -0.224px;">
+        <p class="text-sm font-medium transition-colors duration-300"
+           style="letter-spacing: -0.224px;"
+           :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.48);'">
           Hãy bắt đầu cuộc trò chuyện!
         </p>
       </div>

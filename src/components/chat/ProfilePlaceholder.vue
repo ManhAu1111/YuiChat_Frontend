@@ -1,7 +1,10 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useAuthStore } from '../../stores/auth';
+import { useThemeStore } from '../../stores/themeStore';
+
 const authStore = useAuthStore();
+const themeStore = useThemeStore();
 const emit = defineEmits(['back']);
 
 onMounted(async () => {
@@ -17,15 +20,15 @@ const handleLogout = async () => {
 
 <template>
   <!--
-    Apple Profile: #f5f5f7 background, centered card on dark
-    Uses light section (f5f5f7) — Apple "informational" rhythm
+    Apple Profile: Hỗ trợ chuyển đổi nền sáng tối mượt mà
   -->
-  <div class="relative flex flex-col h-full overflow-y-auto" style="background: #f5f5f7;">
+  <div class="relative flex flex-col h-full overflow-y-auto transition-colors duration-300"
+       :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'">
 
     <!-- Back (mobile) -->
     <button
-      class="md:hidden absolute top-4 left-4 p-2 rounded-full transition-colors hover:bg-black/5"
-      style="color: rgba(0,0,0,0.48);"
+      class="md:hidden absolute top-4 left-4 p-2 rounded-full transition-colors z-10"
+      :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.08);' : 'color: rgba(0,0,0,0.48); background: rgba(0,0,0,0.05);'"
       @click="emit('back')"
       aria-label="Quay lại"
     >
@@ -36,11 +39,15 @@ const handleLogout = async () => {
 
     <!-- Loading -->
     <div v-if="!authStore.user" class="flex flex-col items-center justify-center flex-1 h-full">
-      <svg class="w-8 h-8 animate-spin-smooth" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-20" cx="12" cy="12" r="10" stroke="#1d1d1f" stroke-width="3"/>
-        <path class="opacity-60" fill="#1d1d1f" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      <svg class="w-8 h-8 animate-spin-smooth transition-colors duration-300" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-20" cx="12" cy="12" r="10" :stroke="themeStore.isDark ? '#ffffff' : '#1d1d1f'" stroke-width="3"/>
+        <path class="opacity-60" :fill="themeStore.isDark ? '#ffffff' : '#1d1d1f'" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
       </svg>
-      <p class="mt-3 text-sm" style="color: rgba(0,0,0,0.4); letter-spacing: -0.224px;">Đang tải hồ sơ...</p>
+      <p class="mt-3 text-sm transition-colors duration-300"
+         style="letter-spacing: -0.224px;"
+         :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.4);'">
+        Đang tải hồ sơ...
+      </p>
     </div>
 
     <!-- Profile card -->
@@ -48,8 +55,8 @@ const handleLogout = async () => {
 
       <!-- Avatar -->
       <div class="relative mb-6">
-        <div class="w-24 h-24 rounded-full overflow-hidden"
-             style="background: #e9e9eb; border: 1px solid rgba(0,0,0,0.06);">
+        <div class="w-24 h-24 rounded-full overflow-hidden transition-colors duration-300"
+             :style="themeStore.isDark ? 'background: #272729; border: 1px solid rgba(255,255,255,0.08);' : 'background: #e9e9eb; border: 1px solid rgba(0,0,0,0.06);'">
           <img
             v-if="authStore.user.avatar"
             :src="authStore.user.avatar"
@@ -57,36 +64,42 @@ const handleLogout = async () => {
             alt="Avatar"
           />
           <div v-else class="w-full h-full flex items-center justify-center">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                 style="color: rgba(0,0,0,0.2);">
+            <svg class="w-10 h-10 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                 :style="themeStore.isDark ? 'color: rgba(255,255,255,0.2);' : 'color: rgba(0,0,0,0.2);'">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
           </div>
         </div>
         <!-- Online dot -->
-        <div class="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full border-2 border-white"
-             style="background: #32d74b;"></div>
+        <div class="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full border-2 transition-colors duration-300"
+             :style="themeStore.isDark ? 'background: #32d74b; border-color: #000000;' : 'background: #32d74b; border-color: #ffffff;'"></div>
       </div>
 
       <!-- Name -->
-      <h2 class="font-display font-semibold text-apple-text-dark mb-1"
-          style="font-size: 28px; line-height: 1.14; letter-spacing: 0.196px;">
+      <h2 class="font-display font-semibold mb-1 transition-colors duration-300"
+          style="font-size: 28px; line-height: 1.14; letter-spacing: 0.196px;"
+          :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
         {{ authStore.user.name }}
       </h2>
-      <p class="text-sm mb-1" style="color: rgba(0,0,0,0.48); letter-spacing: -0.224px;">
+      <p class="text-sm mb-1 transition-colors duration-300"
+         style="letter-spacing: -0.224px;"
+         :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.48);'">
         @{{ authStore.user.username }}
       </p>
-      <p class="text-sm mb-10" style="color: rgba(0,0,0,0.3); letter-spacing: -0.224px;">
+      <p class="text-sm mb-10 transition-colors duration-300"
+         style="letter-spacing: -0.224px;"
+         :style="themeStore.isDark ? 'color: rgba(255,255,255,0.3);' : 'color: rgba(0,0,0,0.3);'">
         {{ authStore.user.email }}
       </p>
 
       <!-- Actions -->
       <div class="w-full space-y-3">
-        <!-- Edit profile — Dark CTA -->
+        <!-- Edit profile — Đổi màu theo nền -->
         <button
-          class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-[10px] transition-opacity hover:opacity-75 active:scale-[0.98]"
-          style="background: #1d1d1f; color: #fff; font-size: 15px; letter-spacing: -0.224px;"
+          class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-[10px] transition-all hover:opacity-80 active:scale-[0.98]"
+          style="font-size: 15px; letter-spacing: -0.224px;"
+          :style="themeStore.isDark ? 'background: #272729; color: #ffffff; border: 1px solid rgba(255,255,255,0.08);' : 'background: #1d1d1f; color: #ffffff;'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
