@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted, watch, nextTick, ref, computed } from 'vue';
+import { watch, nextTick, ref, computed } from 'vue';
 import { useAuthStore } from '../../stores/auth';
 import { useChatStore } from '../../stores/chatStore';
 import { useThemeStore } from '../../stores/themeStore';
 import ChatHeader from './ChatHeader.vue';
 import ChatInput from './ChatInput.vue';
+import GroupInfoPanel from './GroupInfoPanel.vue';
 
 const props = defineProps(['chatId']);
 const emit = defineEmits(['back']);
@@ -13,6 +14,7 @@ const chatStore = useChatStore();
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
 const messageContainer = ref(null);
+const isGroupInfoOpen = ref(false);
 
 const currentConversation = computed(() =>
   chatStore.conversations.find(c => c.id === props.chatId)
@@ -20,9 +22,26 @@ const currentConversation = computed(() =>
 
 const targetUser = computed(() => {
   if (!currentConversation.value || !authStore.user) return null;
+  
+  if (currentConversation.value.is_group) {
+    return {
+      id: currentConversation.value.id,
+      name: currentConversation.value.name,
+      avatar: currentConversation.value.avatar,
+      is_group: true,
+      is_online: false
+    };
+  }
+  
   const participant = currentConversation.value.participants.find(p => p.user_id !== authStore.user.id);
   return participant ? participant.user : null;
 });
+
+const getSender = (senderId) => {
+  if (!currentConversation.value) return null;
+  const participant = currentConversation.value.participants.find(p => p.user_id === senderId);
+  return participant ? participant.user : null;
+};
 
 const scrollToBottom = async () => {
   await nextTick();
@@ -65,31 +84,64 @@ const shouldShowAvatar = (idx) => {
   -->
   <div class="flex flex-col h-full transition-colors duration-300"
        :style="themeStore.isDark ? 'background: #000000;' : 'background: #ffffff;'">
-    <ChatHeader :chatId="chatId" :user="targetUser" @back="emit('back')" />
+    <ChatHeader 
+      :chatId="chatId" 
+      :user="targetUser" 
+      @back="emit('back')" 
+      @open-info="isGroupInfoOpen = true" 
+    />
 
-    <!-- Messages area -->
-    <div
-      ref="messageContainer"
-      class="flex-1 overflow-y-auto px-5 py-6 space-y-1 transition-colors duration-300"
-      :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'"
-    >
-      <!-- Empty state -->
-      <div v-if="chatStore.currentMessages.length === 0"
-           class="flex flex-col items-center justify-center h-full text-center py-12">
-        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-colors duration-300"
-             :style="themeStore.isDark ? 'background: rgba(255,255,255,0.08);' : 'background: rgba(0,0,0,0.06);'">
-          <svg class="w-7 h-7 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-               :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.24);'">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-          </svg>
-        </div>
-        <p class="text-sm font-medium transition-colors duration-300"
-           style="letter-spacing: -0.224px;"
-           :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.48);'">
-          Hãy bắt đầu cuộc trò chuyện!
-        </p>
-      </div>
+    <!-- Main Content Area (Chat + Sidebar) -->
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Chat Area -->
+      <div class="flex flex-col flex-1 min-w-0">
+        <!-- Messages area -->
+        <div
+          ref="messageContainer"
+          class="flex-1 overflow-y-auto px-5 py-6 space-y-1 transition-colors duration-300"
+          :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'"
+        >
+          <!-- Skeleton loader for messages -->
+          <div v-if="chatStore.isLoadingMessages" class="space-y-4 animate-pulse">
+            <div v-for="i in 5" :key="i" class="flex items-end gap-2"
+                 :class="i % 2 === 0 ? 'justify-end' : 'justify-start'">
+              <!-- Received message avatar skeleton -->
+              <div v-if="i % 2 !== 0" class="w-7 h-7 rounded-full flex-shrink-0"
+                   :class="themeStore.isDark ? 'bg-white/10' : 'bg-black/10'"></div>
+              
+              <!-- Bubble skeleton -->
+              <div class="px-4 py-3 rounded-2xl max-w-[65%]"
+                   :class="[
+                     i % 2 === 0 
+                       ? (themeStore.isDark ? 'bg-white/10 rounded-br-sm' : 'bg-black/10 rounded-br-sm') 
+                       : (themeStore.isDark ? 'bg-white/5 rounded-bl-sm' : 'bg-black/5 rounded-bl-sm'),
+                     i === 1 ? 'w-[45%]' : i === 2 ? 'w-[30%]' : i === 3 ? 'w-[55%]' : i === 4 ? 'w-[40%]' : 'w-[50%]'
+                   ]">
+                <div class="h-3 rounded-full mb-2"
+                     :class="themeStore.isDark ? 'bg-white/10' : 'bg-black/10'"></div>
+                <div class="h-2 rounded-full w-2/3"
+                     :class="themeStore.isDark ? 'bg-white/5' : 'bg-black/5'"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else-if="chatStore.currentMessages.length === 0"
+               class="flex flex-col items-center justify-center h-full text-center py-12">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 transition-colors duration-300"
+                 :style="themeStore.isDark ? 'background: rgba(255,255,255,0.08);' : 'background: rgba(0,0,0,0.06);'">
+              <svg class="w-7 h-7 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                   :style="themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.24);'">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              </svg>
+            </div>
+            <p class="text-sm font-medium transition-colors duration-300"
+               style="letter-spacing: -0.224px;"
+               :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.48);'">
+              Hãy bắt đầu cuộc trò chuyện!
+            </p>
+          </div>
 
       <!-- Message bubbles -->
       <TransitionGroup name="bubble" tag="div" class="space-y-1">
@@ -103,7 +155,7 @@ const shouldShowAvatar = (idx) => {
           <div v-if="msg.sender_id !== authStore.user?.id" class="w-7 flex-shrink-0">
             <img
               v-if="shouldShowAvatar(idx)"
-              :src="targetUser?.avatar || 'https://ui-avatars.com/api/?name=' + (targetUser?.name || 'U') + '&background=e9e9eb&color=1d1d1f&size=56'"
+              :src="getSender(msg.sender_id)?.avatar || 'https://ui-avatars.com/api/?name=' + (getSender(msg.sender_id)?.name || 'U') + '&background=e9e9eb&color=1d1d1f&size=56'"
               class="w-7 h-7 rounded-full object-cover"
             />
           </div>
@@ -122,10 +174,19 @@ const shouldShowAvatar = (idx) => {
             </div>
           </div>
         </div>
-      </TransitionGroup>
-    </div>
+        </TransitionGroup>
+        </div>
 
-    <ChatInput :conversationId="chatId" />
+        <ChatInput :conversationId="chatId" />
+      </div>
+      
+      <!-- Group Info Panel (Right Sidebar) -->
+      <GroupInfoPanel 
+        v-if="isGroupInfoOpen && currentConversation?.is_group"
+        :conversation="currentConversation"
+        @close="isGroupInfoOpen = false"
+      />
+    </div>
   </div>
 </template>
 

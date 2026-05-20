@@ -11,6 +11,7 @@ export const useChatStore = defineStore('chat', {
     activeConversationId: null,
     isLoading: false,
     isSearching: false,
+    isLoadingMessages: false,
   }),
 
   actions: {
@@ -84,6 +85,77 @@ export const useChatStore = defineStore('chat', {
         return conversation;
       } catch (error) {
         console.error('Lỗi bắt đầu cuộc hội thoại:', error);
+        throw error;
+      }
+    },
+
+    async createGroupConversation(name, userIds) {
+      try {
+        const response = await api.post('/groups', { name, user_ids: userIds });
+        const conversation = response.data;
+        
+        await this.fetchConversations();
+        this.activeConversationId = conversation.id;
+        
+        return conversation;
+      } catch (error) {
+        console.error('Lỗi tạo nhóm:', error);
+        throw error;
+      }
+    },
+    
+    async addGroupMembers(conversationId, userIds) {
+      try {
+        const response = await api.post(`/groups/${conversationId}/members`, { user_ids: userIds });
+        const updatedConversation = response.data;
+        
+        const index = this.conversations.findIndex(c => c.id === conversationId);
+        if (index !== -1) {
+          this.conversations[index] = updatedConversation;
+        }
+        return updatedConversation;
+      } catch (error) {
+        console.error('Lỗi thêm thành viên:', error);
+        throw error;
+      }
+    },
+    
+    async removeGroupMember(conversationId, userId) {
+      try {
+        await api.delete(`/groups/${conversationId}/members/${userId}`);
+        
+        const index = this.conversations.findIndex(c => c.id === conversationId);
+        if (index !== -1) {
+          this.conversations[index].participants = this.conversations[index].participants.filter(p => p.user_id !== userId);
+        }
+      } catch (error) {
+        console.error('Lỗi xoá thành viên:', error);
+        throw error;
+      }
+    },
+    
+    async updateGroupInfo(conversationId, name, avatarFile) {
+      try {
+        const formData = new FormData();
+        if (name) formData.append('name', name);
+        if (avatarFile) formData.append('avatar', avatarFile);
+        
+        formData.append('_method', 'PUT');
+        
+        const response = await api.post(`/groups/${conversationId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        const updatedConversation = response.data;
+        const index = this.conversations.findIndex(c => c.id === conversationId);
+        if (index !== -1) {
+          this.conversations[index] = updatedConversation;
+        }
+        return updatedConversation;
+      } catch (error) {
+        console.error('Lỗi cập nhật thông tin nhóm:', error);
         throw error;
       }
     },

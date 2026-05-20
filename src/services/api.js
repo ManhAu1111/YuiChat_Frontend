@@ -2,9 +2,11 @@ import axios from 'axios';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
+// Tự động lấy IP hiện tại mà người dùng đang truy cập trên thanh địa chỉ (vd: 192.168.x.x hoặc localhost)
+const currentHostname = window.location.hostname;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api',
-  // baseURL: 'http://127.0.0.1:8000/api', // Đường dẫn tới Backend Laravel
+  baseURL: `http://${currentHostname}:8000/api`,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -30,19 +32,16 @@ api.interceptors.request.use(
 
 window.Pusher = Pusher;
 
-// Lấy IP động từ baseURL của Axios để dùng cho authEndpoint
-const currentHost = api.defaults.baseURL.replace('/api', '');
-
 window.Echo = new Echo({
   broadcaster: 'reverb',
   key: import.meta.env.VITE_REVERB_APP_KEY,
-  wsHost: currentHost.replace('http://', '').replace('https://', '').split(':')[0],
+  wsHost: currentHostname,
   wsPort: 8080,
   wssPort: 8080,
   forceTLS: false,
   disableStats: true,
   enabledTransports: ['ws', 'wss'],
-  authEndpoint: `${currentHost}/broadcasting/auth`,
+  authEndpoint: `http://${currentHostname}:8000/broadcasting/auth`,
   auth: {
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`

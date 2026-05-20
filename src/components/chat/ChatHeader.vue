@@ -2,8 +2,27 @@
 import { useThemeStore } from '../../stores/themeStore';
 
 const props = defineProps(['chatId', 'user']);
-const emit = defineEmits(['back']);
+const emit = defineEmits(['back', 'open-info']);
 const themeStore = useThemeStore();
+
+const formatOfflineTime = (dateStr) => {
+  if (!dateStr) return 'Ngoại tuyến';
+  const lastActive = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - lastActive;
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) return 'Vừa mới truy cập';
+  if (diffMins < 60) return `Hoạt động ${diffMins} phút trước`;
+  
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `Hoạt động ${diffHours} giờ trước`;
+  
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `Hoạt động ${diffDays} ngày trước`;
+  
+  return `Hoạt động từ ${lastActive.toLocaleDateString()}`;
+};
 </script>
 
 <template>
@@ -35,7 +54,8 @@ const themeStore = useThemeStore();
           class="w-9 h-9 rounded-full object-cover transition-colors duration-300"
           :style="themeStore.isDark ? 'background: #272729;' : 'background: #f5f5f7;'"
         />
-        <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors duration-300"
+        <div v-if="user?.is_online"
+             class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors duration-300"
              :style="themeStore.isDark ? 'background: #32d74b; border-color: #1d1d1f;' : 'background: #32d74b; border-color: #ffffff;'"></div>
       </div>
 
@@ -46,7 +66,10 @@ const themeStore = useThemeStore();
             :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
           {{ user?.name || 'Đang tải...' }}
         </h2>
-        <p class="text-[11px]" style="color: #32d74b; letter-spacing: -0.08px;">Đang hoạt động</p>
+        <p v-if="!user?.is_group" class="text-[11px]" style="letter-spacing: -0.08px;"
+           :style="user?.is_online ? 'color: #32d74b;' : (themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.4);')">
+          {{ user?.is_online ? 'Đang hoạt động' : formatOfflineTime(user?.last_active_at) }}
+        </p>
       </div>
     </div>
 
@@ -82,6 +105,19 @@ const themeStore = useThemeStore();
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                 d="M15 10l4.553 2.276A1 1 0 0120 13.118v3.764a1 1 0 01-.447.894L15 20M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+      </button>
+
+      <!-- Group Info Button -->
+      <button
+        v-if="user?.is_group"
+        @click="emit('open-info')"
+        class="p-2 rounded-full transition-colors"
+        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
+        aria-label="Thông tin nhóm"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
       </button>
     </div>
