@@ -24,6 +24,8 @@ function saveToStorage(states) {
 export const useFriendshipStore = defineStore('friendship', {
   state: () => ({
     friendshipStates: loadFromStorage(),
+    friends: [],
+    isLoadingFriends: false,
     isLoading: false,
     error: null,
   }),
@@ -72,6 +74,22 @@ export const useFriendshipStore = defineStore('friendship', {
         console.error('[FriendshipStore] fetchStates error:', err);
       } finally {
         this.isLoading = false;
+      }
+    },
+
+    /**
+     * Fetch the detailed list of accepted friends.
+     * GET /api/friends
+     */
+    async fetchFriends() {
+      this.isLoadingFriends = true;
+      try {
+        const response = await api.get('/friends');
+        this.friends = response.data.data || [];
+      } catch (err) {
+        console.error('[FriendshipStore] fetchFriends error:', err);
+      } finally {
+        this.isLoadingFriends = false;
       }
     },
 

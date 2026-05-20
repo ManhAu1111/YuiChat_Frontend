@@ -2,17 +2,17 @@
 import { onMounted, ref, watch } from 'vue';
 import { useChatStore } from '../../stores/chatStore';
 import { useAuthStore } from '../../stores/auth';
-import { useFriendshipStore } from '../../stores/friendshipStore';
 import { useThemeStore } from '../../stores/themeStore';
 import FriendshipButton from './FriendshipButton.vue';
+import CreateGroupModal from './CreateGroupModal.vue';
 
 const emit = defineEmits(['select-chat']);
 const chatStore = useChatStore();
 const authStore = useAuthStore();
-const friendshipStore = useFriendshipStore();
 const themeStore = useThemeStore();
 const selectedId = ref(null);
 const searchQuery = ref('');
+const isCreateGroupModalOpen = ref(false);
 
 let searchTimeout = null;
 
@@ -33,6 +33,10 @@ watch(() => chatStore.activeConversationId, (newId) => {
 const selectChat = (id) => {
   selectedId.value = id;
   emit('select-chat', id);
+};
+
+const handleGroupCreated = (id) => {
+  selectChat(id);
 };
 
 const handleStartConversation = async (userId) => {
@@ -89,9 +93,9 @@ const handleSearchMouseOut = (event) => {
   <div class="flex flex-col h-full relative transition-colors duration-300">
 
     <!-- Search bar -->
-    <div class="px-4 py-3 flex-shrink-0 transition-colors duration-300"
+    <div class="px-4 py-3 flex-shrink-0 transition-colors duration-300 flex items-center gap-2"
          :style="themeStore.isDark ? 'border-bottom: 1px solid rgba(255,255,255,0.07);' : 'border-bottom: 1px solid rgba(0,0,0,0.08);'">
-      <div class="relative">
+      <div class="relative flex-1">
         <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none transition-colors duration-300"
               :style="themeStore.isDark ? 'color: rgba(255,255,255,0.3);' : 'color: rgba(0,0,0,0.4);'">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,6 +112,16 @@ const handleSearchMouseOut = (event) => {
           :class="themeStore.isDark ? 'apple-input' : 'apple-input-light'"
         />
       </div>
+
+      <!-- Create Group Button -->
+      <button 
+        @click="isCreateGroupModalOpen = true"
+        class="p-2 rounded-full transition-colors flex-shrink-0 hover:bg-gray-500/20"
+        :style="themeStore.isDark ? 'color: #fff;' : 'color: #1d1d1f;'"
+        title="Tạo nhóm chat"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+      </button>
 
       <!-- Search results dropdown -->
       <div v-if="searchQuery && (chatStore.searchResults.length > 0 || chatStore.isSearching)"
@@ -170,15 +184,18 @@ const handleSearchMouseOut = (event) => {
     <div class="flex-1 overflow-y-auto">
 
       <!-- Loading skeleton -->
-      <div v-if="chatStore.isLoading && chatStore.conversations.length === 0" class="p-4 space-y-3">
-        <div v-for="i in 5" :key="i" class="flex items-center gap-3 px-2 py-2">
-          <div class="w-11 h-11 rounded-full flex-shrink-0 transition-colors duration-300"
-               :style="themeStore.isDark ? 'background: rgba(255,255,255,0.06);' : 'background: rgba(0,0,0,0.05);'"></div>
+      <div v-if="chatStore.isLoading && chatStore.conversations.length === 0" class="p-4 space-y-3 animate-pulse">
+        <div v-for="i in 6" :key="i" class="flex items-center gap-3 px-2 py-2">
+          <div class="w-11 h-11 rounded-full flex-shrink-0"
+               :class="themeStore.isDark ? 'bg-white/10' : 'bg-black/10'"></div>
           <div class="flex-1 space-y-2">
-            <div class="h-3 rounded-full w-3/5 transition-colors duration-300"
-                 :style="themeStore.isDark ? 'background: rgba(255,255,255,0.06);' : 'background: rgba(0,0,0,0.05);'"></div>
-            <div class="h-2.5 rounded-full w-4/5 transition-colors duration-300"
-                 :style="themeStore.isDark ? 'background: rgba(255,255,255,0.04);' : 'background: rgba(0,0,0,0.03);'"></div>
+            <div class="h-3 rounded-full"
+                 :class="[
+                   themeStore.isDark ? 'bg-white/10' : 'bg-black/10',
+                   i % 3 === 0 ? 'w-2/5' : (i % 3 === 1 ? 'w-3/5' : 'w-1/2')
+                 ]"></div>
+            <div class="h-2.5 rounded-full w-4/5"
+                 :class="themeStore.isDark ? 'bg-white/5' : 'bg-black/5'"></div>
           </div>
         </div>
       </div>
@@ -261,5 +278,12 @@ const handleSearchMouseOut = (event) => {
         </button>
       </div>
     </div>
+    
+    <!-- Create Group Modal -->
+    <CreateGroupModal 
+      v-if="isCreateGroupModalOpen" 
+      @close="isCreateGroupModalOpen = false"
+      @created="handleGroupCreated"
+    />
   </div>
 </template>

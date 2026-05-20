@@ -30,6 +30,7 @@ onMounted(async () => {
   // 3. Start the real-time listener so we get live updates while online
   friendshipStore.listenForRealTimeUpdates(authStore.user?.id);
   notificationStore.listenForRealTimeUpdates(authStore.user?.id);
+  authStore.startHeartbeat();
 });
 </script>
 
