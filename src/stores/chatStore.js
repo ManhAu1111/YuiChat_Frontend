@@ -12,35 +12,40 @@ export const useChatStore = defineStore('chat', {
     isLoading: false,
     isSearching: false,
     isLoadingMessages: false,
+    subscribedChannels: [],
   }),
 
   actions: {
     listenForMessages(conversationId) {
-      if (window.Echo) {
+      if (window.Echo && !this.subscribedChannels.includes(conversationId)) {
+        this.subscribedChannels.push(conversationId);
         window.Echo.private(`chat.${conversationId}`)
           .listen('MessageSent', (e) => {
-
-            // 1. Phải mở hộp lấy dữ liệu tin nhắn (nếu có)
             const newMessage = e.message || e;
 
-            // 2. So sánh bằng ID của newMessage
-            const isMyMessage = this.currentMessages.some(m => m.id === newMessage.id);
+            // 1. Thêm vào cache nếu có (tự động cập nhật currentMessages nếu đang xem phòng này)
+            if (this.messagesCache[conversationId]) {
+              const isMyMessage = this.messagesCache[conversationId].some(m => m.id === newMessage.id);
+              if (!isMyMessage) {
+                this.messagesCache[conversationId].push(newMessage);
+              }
+            }
 
-            if (!isMyMessage) {
-              if (this.activeConversationId === conversationId) {
-                this.currentMessages.push(newMessage); // Đẩy newMessage vào thay vì e
+            // 2. Cập nhật danh sách hội thoại bên trái
+            const convIndex = this.conversations.findIndex(c => c.id === conversationId);
+            if (convIndex !== -1) {
+              this.conversations[convIndex].last_message = newMessage;
+              this.conversations[convIndex].updated_at = newMessage.created_at;
+
+              // Tăng unread nếu không phải phòng đang mở và không phải tin nhắn của mình
+              const authStore = useAuthStore();
+              if (this.activeConversationId !== conversationId && newMessage.sender_id !== authStore.user?.id) {
+                this.conversations[convIndex].unread = (this.conversations[convIndex].unread || 0) + 1;
               }
 
-              // Cập nhật danh sách hội thoại bên trái
-              const convIndex = this.conversations.findIndex(c => c.id === conversationId);
-              if (convIndex !== -1) {
-                this.conversations[convIndex].last_message = newMessage; // Dùng newMessage
-                this.conversations[convIndex].updated_at = newMessage.created_at;
-
-                // Đưa lên đầu danh sách
-                const [movedConv] = this.conversations.splice(convIndex, 1);
-                this.conversations.unshift(movedConv);
-              }
+              // Đưa lên đầu danh sách
+              const [movedConv] = this.conversations.splice(convIndex, 1);
+              this.conversations.unshift(movedConv);
             }
           });
       }
@@ -165,6 +170,11 @@ export const useChatStore = defineStore('chat', {
       try {
         const response = await api.get('/conversations');
         this.conversations = response.data;
+        
+        // Lắng nghe tất cả các phòng chat để nhận tin nhắn real-time mọi lúc
+        this.conversations.forEach(conv => {
+          this.listenForMessages(conv.id);
+        });
       } catch (error) {
         console.error('Lỗi lấy danh sách hội thoại:', error);
       } finally {
@@ -174,6 +184,12 @@ export const useChatStore = defineStore('chat', {
 
     async fetchMessages(conversationId) {
       this.activeConversationId = conversationId;
+
+      // Reset unread count when opening the conversation
+      const convIndex = this.conversations.findIndex(c => c.id === conversationId);
+      if (convIndex !== -1) {
+        this.conversations[convIndex].unread = 0;
+      }
 
       // 1. KIỂM TRA CACHE TRƯỚC
       // Nếu kho chứa đã có data của phòng này, lôi ra xài luôn và DỪNG LẠI (Không gọi API)
@@ -238,7 +254,12 @@ export const useChatStore = defineStore('chat', {
         if (this.activeConversationId === conversationId) {
           const index = this.currentMessages.findIndex(m => m.id === tempId);
           if (index !== -1) {
-            this.currentMessages[index] = realMessage; // Ghi đè bằng data thật từ DB
+            const realExists = this.currentMessages.some(m => m.id === realMessage.id);
+            if (realExists) {
+              this.currentMessages.splice(index, 1); // Đã nhận qua Echo, xoá tin ảo
+            } else {
+              this.currentMessages[index] = realMessage; // Ghi đè bằng data thật
+            }
           }
         }
 

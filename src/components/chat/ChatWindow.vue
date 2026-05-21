@@ -51,7 +51,6 @@ const scrollToBottom = async () => {
 };
 
 watch(() => props.chatId, (newId, oldId) => {
-  if (oldId) chatStore.leaveChannel(oldId);
   if (newId) {
     chatStore.fetchMessages(newId).then(() => {
       scrollToBottom();
