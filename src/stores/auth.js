@@ -42,7 +42,8 @@ export const useAuthStore = defineStore('auth', {
         await fs.fetchStates();
         await ns.fetchNotifications();
         await ns.fetchUnreadCount();
-        fs.listenForRealTimeUpdates(this.user?.id);
+        // Only notificationStore subscribes to the Echo channel;
+        // it dispatches friendship events internally.
         ns.listenForRealTimeUpdates(this.user?.id);
         this.startHeartbeat();
       } catch { /* non-critical */ }
@@ -58,7 +59,8 @@ export const useAuthStore = defineStore('auth', {
         await fs.fetchStates();
         await ns.fetchNotifications();
         await ns.fetchUnreadCount();
-        fs.listenForRealTimeUpdates(this.user?.id);
+        // Only notificationStore subscribes to the Echo channel;
+        // it dispatches friendship events internally.
         ns.listenForRealTimeUpdates(this.user?.id);
         this.startHeartbeat();
       } catch { /* non-critical */ }

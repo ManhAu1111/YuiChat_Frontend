@@ -82,8 +82,8 @@ const changeTab = (tabId) => {
 
         <!-- Notification badge on Notifications tab -->
         <span v-if="tab.id === 'notifications' && notificationStore.unreadCount > 0"
-              class="absolute top-0.5 right-1.5 min-w-[16px] h-[16px] px-1 flex items-center justify-center rounded-full text-white text-[9px] font-bold transition-shadow duration-300"
-              style="background: #ff3b30;"
+              class="absolute rounded-full text-white font-bold flex items-center justify-center transition-shadow duration-300"
+              style="background: #ff3b30; min-width: 16px; height: 16px; font-size: 9px; line-height: 1; top: 2px; right: 6px; padding: 0 4px; z-index: 10;"
               :style="themeStore.isDark ? 'box-shadow: 0 0 0 2px #1d1d1f;' : 'box-shadow: 0 0 0 2px #ffffff;'">
           {{ notificationStore.unreadCount > 99 ? '99+' : notificationStore.unreadCount }}
         </span>

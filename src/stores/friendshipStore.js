@@ -205,40 +205,45 @@ export const useFriendshipStore = defineStore('friendship', {
      *   - FriendAcceptedNoti  → move the ID from pending_sent → accepted
      *   - FriendDeclinedNoti  → remove from pending_sent
      */
-    listenForRealTimeUpdates(userId) {
-      if (!window.Echo || !userId) return;
+    handleRealtimeNotification(notification) {
+      const type = notification.type ?? '';
+      const senderId = String(notification.sender_id ?? notification.data?.sender_id ?? '');
+      if (!senderId) return;
 
-      window.Echo.private(`App.Models.User.${userId}`)
-        .notification((notification) => {
-          const type = notification.type ?? '';
-          const senderId = String(notification.sender_id ?? '');
-          if (!senderId) return;
+      // ── Incoming friend request ──────────────────────────────────────
+      if (type.endsWith('FriendRequestNoti') || type.includes('FriendRequestNoti')) {
+        if (!this.friendshipStates.pending_received.includes(senderId)) {
+          this.friendshipStates.pending_received.push(senderId);
+        }
+        this.friendshipStates.accepted =
+          this.friendshipStates.accepted.filter(v => v !== senderId);
+        this.friendshipStates.pending_sent =
+          this.friendshipStates.pending_sent.filter(v => v !== senderId);
+        this._persist();
+      }
 
-          // ── Incoming friend request ──────────────────────────────────────
-          if (type.endsWith('FriendRequestNoti')) {
-            if (!this.friendshipStates.pending_received.includes(senderId)) {
-              this.friendshipStates.pending_received.push(senderId);
-              this._persist();
-            }
-          }
+      // ── Receiver accepted our sent request ───────────────────────────
+      if (type.endsWith('FriendAcceptedNoti') || type.includes('FriendAcceptedNoti')) {
+        this.friendshipStates.pending_sent =
+          this.friendshipStates.pending_sent.filter(v => v !== senderId);
+        this.friendshipStates.pending_received =
+          this.friendshipStates.pending_received.filter(v => v !== senderId);
+        if (!this.friendshipStates.accepted.includes(senderId)) {
+          this.friendshipStates.accepted.push(senderId);
+        }
+        this._persist();
+      }
 
-          // ── Receiver accepted our sent request ───────────────────────────
-          if (type.endsWith('FriendAcceptedNoti')) {
-            this.friendshipStates.pending_sent =
-              this.friendshipStates.pending_sent.filter(v => v !== senderId);
-            if (!this.friendshipStates.accepted.includes(senderId)) {
-              this.friendshipStates.accepted.push(senderId);
-            }
-            this._persist();
-          }
-
-          // ── Receiver declined our sent request ───────────────────────────
-          if (type.endsWith('FriendDeclinedNoti')) {
-            this.friendshipStates.pending_sent =
-              this.friendshipStates.pending_sent.filter(v => v !== senderId);
-            this._persist();
-          }
-        });
+      // ── Receiver declined our sent request / sender cancelled request ──
+      if (type.endsWith('FriendDeclinedNoti') || type.includes('FriendDeclinedNoti')) {
+        this.friendshipStates.pending_sent =
+          this.friendshipStates.pending_sent.filter(v => v !== senderId);
+        this.friendshipStates.pending_received =
+          this.friendshipStates.pending_received.filter(v => v !== senderId);
+        this.friendshipStates.accepted =
+          this.friendshipStates.accepted.filter(v => v !== senderId);
+        this._persist();
+      }
     },
 
     /**
@@ -246,9 +251,7 @@ export const useFriendshipStore = defineStore('friendship', {
      * Call on logout.
      */
     stopListening(userId) {
-      if (window.Echo && userId) {
-        window.Echo.leave(`App.Models.User.${userId}`);
-      }
+      // Channel is now managed by notificationStore – nothing to do here.
     },
 
     /**
