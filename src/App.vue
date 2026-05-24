@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/auth';
 import { useFriendshipStore } from './stores/friendshipStore';
 import { useNotificationStore } from './stores/notificationStore';
 import { useThemeStore } from './stores/themeStore';
+import NotificationToast from './components/chat/NotificationToast.vue';
 
 const authStore = useAuthStore();
 const friendshipStore = useFriendshipStore();
@@ -28,7 +29,7 @@ onMounted(async () => {
   await notificationStore.fetchUnreadCount();
 
   // 3. Start the real-time listener so we get live updates while online
-  friendshipStore.listenForRealTimeUpdates(authStore.user?.id);
+  //    Only notificationStore subscribes; it dispatches friendship events internally.
   notificationStore.listenForRealTimeUpdates(authStore.user?.id);
   authStore.startHeartbeat();
 });
@@ -36,6 +37,8 @@ onMounted(async () => {
 
 <template>
   <RouterView />
+  <!-- Global toast notifications – rendered on top of everything -->
+  <NotificationToast />
 </template>
 
 <style>

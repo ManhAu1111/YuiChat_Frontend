@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useChatStore } from '../../stores/chatStore';
 import { useThemeStore } from '../../stores/themeStore';
 
@@ -8,6 +8,22 @@ const chatStore = useChatStore();
 const themeStore = useThemeStore();
 const messageText = ref('');
 const isSending = ref(false);
+const isFocused = ref(false);
+
+const inputStyle = computed(() => {
+  const isDark = themeStore.isDark;
+  return {
+    background: isDark 
+      ? (isFocused.value ? '#2a2a2d' : '#272729')
+      : (isFocused.value ? '#ffffff' : '#f5f5f7'),
+    color: isDark ? '#ffffff' : '#1d1d1f',
+    borderColor: isFocused.value ? '#0071e3' : 'transparent',
+    borderStyle: 'solid',
+    borderWidth: '1px',
+    letterSpacing: '-0.224px',
+    lineHeight: '1.47'
+  };
+});
 
 const sendMessage = async () => {
   if (messageText.value.trim() && !isSending.value) {
@@ -54,11 +70,9 @@ const sendMessage = async () => {
         @keyup.enter="sendMessage"
         placeholder="Nhập tin nhắn..."
         class="w-full px-4 py-2.5 pr-11 rounded-apple-pill text-sm outline-none transition-all duration-300"
-        :style="themeStore.isDark
-          ? 'background: #272729; color: #ffffff; border: 1px solid transparent; letter-spacing: -0.224px; line-height: 1.47;'
-          : 'background: #f5f5f7; color: #1d1d1f; border: 1px solid transparent; letter-spacing: -0.224px; line-height: 1.47;'"
-        onfocus="this.style.borderColor='#0071e3'; if(this.style.background.includes('27')) this.style.background='#2a2a2d'; else this.style.background='#fff';"
-        onblur="this.style.borderColor='transparent'; if(this.style.color.includes('fff')) this.style.background='#272729'; else this.style.background='#f5f5f7';"
+        :style="inputStyle"
+        @focus="isFocused = true"
+        @blur="isFocused = false"
       />
 
       <!-- Send button — Apple Blue, visible when text present -->

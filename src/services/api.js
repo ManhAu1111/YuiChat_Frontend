@@ -20,8 +20,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    if (window.Echo && window.Echo.socketId()) {
-      config.headers['X-Socket-ID'] = window.Echo.socketId();
+    if (window.Echo && window.Echo.connector?.pusher?.connection?.socket_id) {
+      config.headers['X-Socket-ID'] = window.Echo.connector.pusher.connection.socket_id;
     }
     return config;
   },
@@ -31,6 +31,7 @@ api.interceptors.request.use(
 );
 
 window.Pusher = Pusher;
+window.axios = api; // Expose to window so Laravel Echo uses it automatically for channel auth
 
 window.Echo = new Echo({
   broadcaster: 'reverb',
@@ -41,12 +42,22 @@ window.Echo = new Echo({
   forceTLS: false,
   disableStats: true,
   enabledTransports: ['ws', 'wss'],
-  authEndpoint: `http://${currentHostname}:8000/broadcasting/auth`,
-  auth: {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    }
-  }
+  authorizer: (channel, options) => {
+    return {
+      authorize: (socketId, callback) => {
+        api.post(`http://${currentHostname}:8000/broadcasting/auth`, {
+            socket_id: socketId,
+            channel_name: channel.name
+        })
+        .then(response => {
+            callback(false, response.data);
+        })
+        .catch(error => {
+            callback(true, error);
+        });
+      }
+    };
+  },
 });
 
 export default api;
