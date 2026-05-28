@@ -284,6 +284,78 @@ export const useChatStore = defineStore('chat', {
         }
         throw error;
       }
+    },
+    async sendFileMessage(conversationId, { url, fileName, fileType, fileSize, content, msgType }) {
+      const authStore = useAuthStore();
+
+      // 1. Tạo tin nhắn ảo (Optimistic UI)
+      const tempId = 'temp_file_' + Date.now();
+      const tempMessage = {
+        id: tempId,
+        conversation_id: conversationId,
+        sender_id: authStore.user?.id,
+        content: content || null,
+        type: msgType,
+        metadata: { file_name: fileName, file_size: fileSize, file_type: fileType },
+        attachments: [{ file_url: url, file_name: fileName, file_type: fileType, file_size: fileSize }],
+        created_at: new Date().toISOString(),
+        is_sending: true,
+      };
+
+      if (this.activeConversationId === conversationId) {
+        this.currentMessages.push(tempMessage);
+        if (this.messagesCache[conversationId]) {
+          this.messagesCache[conversationId].push(tempMessage);
+        }
+      }
+
+      try {
+        // 2. Gửi lên server
+        const response = await api.post(`/conversations/${conversationId}/messages`, {
+          content: content || null,
+          type: msgType,
+          attachment_url: url,
+          file_name: fileName,
+          file_type: fileType,
+          file_size: fileSize,
+        });
+
+        const realMessage = response.data;
+
+        // 3. Tráo tin nhắn ảo → tin nhắn thật
+        if (this.activeConversationId === conversationId) {
+          const idx = this.currentMessages.findIndex(m => m.id === tempId);
+          if (idx !== -1) {
+            const realExists = this.currentMessages.some(m => m.id === realMessage.id);
+            if (realExists) {
+              this.currentMessages.splice(idx, 1);
+            } else {
+              this.currentMessages[idx] = realMessage;
+            }
+          }
+        }
+
+        // 4. Cập nhật danh sách hội thoại
+        const convIndex = this.conversations.findIndex(c => c.id === conversationId);
+        if (convIndex !== -1) {
+          this.conversations[convIndex].last_message = realMessage;
+          this.conversations[convIndex].updated_at = realMessage.created_at;
+          const [movedConv] = this.conversations.splice(convIndex, 1);
+          this.conversations.unshift(movedConv);
+        }
+
+        return realMessage;
+      } catch (error) {
+        // Rollback: xóa tin nhắn ảo
+        if (this.activeConversationId === conversationId) {
+          this.currentMessages = this.currentMessages.filter(m => m.id !== tempId);
+          if (this.messagesCache[conversationId]) {
+            this.messagesCache[conversationId] = this.messagesCache[conversationId].filter(m => m.id !== tempId);
+          }
+        }
+        console.error('Lỗi gửi file:', error);
+        throw error;
+      }
     }
   }
 });

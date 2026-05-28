@@ -5,7 +5,7 @@ import { useAuthStore } from './stores/auth';
 import { useFriendshipStore } from './stores/friendshipStore';
 import { useNotificationStore } from './stores/notificationStore';
 import { useThemeStore } from './stores/themeStore';
-import NotificationToast from './components/chat/NotificationToast.vue';
+import NotificationToast from './components/chat/notifications/NotificationToast.vue';
 
 const authStore = useAuthStore();
 const friendshipStore = useFriendshipStore();

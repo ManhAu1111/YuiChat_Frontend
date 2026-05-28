@@ -1,8 +1,8 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
-import { useNotificationStore } from '../../stores/notificationStore';
-import { useFriendshipStore } from '../../stores/friendshipStore';
-import { useThemeStore } from '../../stores/themeStore';
+import { useNotificationStore } from '../../../stores/notificationStore';
+import { useFriendshipStore } from '../../../stores/friendshipStore';
+import { useThemeStore } from '../../../stores/themeStore';
 import NotificationItem from './NotificationItem.vue';
 
 const notificationStore = useNotificationStore();

@@ -1,7 +1,7 @@
 <script setup>
-import { useFriendshipStore } from '../../stores/friendshipStore';
-import { useNotificationStore } from '../../stores/notificationStore';
-import { useThemeStore } from '../../stores/themeStore';
+import { useFriendshipStore } from '../../../stores/friendshipStore';
+import { useNotificationStore } from '../../../stores/notificationStore';
+import { useThemeStore } from '../../../stores/themeStore';
 
 const props = defineProps({
   noti: { type: Object, required: true },
