@@ -1,5 +1,5 @@
 <script setup>
-import { useThemeStore } from '../../stores/themeStore';
+import { useThemeStore } from '../../../stores/themeStore';
 
 const props = defineProps(['chatId', 'user']);
 const emit = defineEmits(['back', 'open-info']);

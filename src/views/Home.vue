@@ -1,11 +1,11 @@
 <script setup>
-import ChatList from '../components/chat/ChatList.vue';
-import ChatWindow from '../components/chat/ChatWindow.vue';
-import BottomNav from '../components/chat/BottomNav.vue';
-import ContactsPlaceholder from '../components/chat/ContactsPlaceholder.vue';
-import ProfilePlaceholder from '../components/chat/ProfilePlaceholder.vue';
-import SettingsPlaceholder from '../components/chat/SettingsPlaceholder.vue';
-import NotificationPanel from '../components/chat/NotificationPanel.vue';
+import ChatList from '../components/chat/sidebar/ChatList.vue';
+import ChatWindow from '../components/chat/room/ChatWindow.vue';
+import BottomNav from '../components/chat/navigation/BottomNav.vue';
+import ContactsPlaceholder from '../components/chat/tabs/ContactsPlaceholder.vue';
+import ProfilePlaceholder from '../components/chat/tabs/ProfilePlaceholder.vue';
+import SettingsPlaceholder from '../components/chat/tabs/SettingsPlaceholder.vue';
+import NotificationPanel from '../components/chat/notifications/NotificationPanel.vue';
 
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';

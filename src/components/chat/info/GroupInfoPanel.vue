@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { useAuthStore } from '../../stores/auth';
-import { useChatStore } from '../../stores/chatStore';
-import { useThemeStore } from '../../stores/themeStore';
+import { useAuthStore } from '../../../stores/auth';
+import { useChatStore } from '../../../stores/chatStore';
+import { useThemeStore } from '../../../stores/themeStore';
 
 const props = defineProps(['conversation']);
 const emit = defineEmits(['close']);

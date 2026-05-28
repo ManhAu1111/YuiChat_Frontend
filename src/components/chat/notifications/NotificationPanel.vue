@@ -1,8 +1,8 @@
 <script setup>
 import { onMounted } from 'vue';
-import { useNotificationStore } from '../../stores/notificationStore';
-import { useThemeStore } from '../../stores/themeStore';
-import { useFriendshipStore } from '../../stores/friendshipStore';
+import { useNotificationStore } from '../../../stores/notificationStore';
+import { useThemeStore } from '../../../stores/themeStore';
+import { useFriendshipStore } from '../../../stores/friendshipStore';
 import NotificationItem from './NotificationItem.vue';
 
 const emit = defineEmits(['back']);

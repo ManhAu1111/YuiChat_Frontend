@@ -1,8 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useFriendshipStore } from '../../stores/friendshipStore';
-import { useChatStore } from '../../stores/chatStore';
-import { useThemeStore } from '../../stores/themeStore';
+import { useFriendshipStore } from '../../../stores/friendshipStore';
+import { useChatStore } from '../../../stores/chatStore';
+import { useThemeStore } from '../../../stores/themeStore';
 
 const emit = defineEmits(['close', 'created']);
 const friendshipStore = useFriendshipStore();

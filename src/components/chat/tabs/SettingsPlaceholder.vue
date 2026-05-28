@@ -1,5 +1,5 @@
 <script setup>
-import { useThemeStore } from '../../stores/themeStore';
+import { useThemeStore } from '../../../stores/themeStore';
 
 const emit = defineEmits(['back']);
 const themeStore = useThemeStore();

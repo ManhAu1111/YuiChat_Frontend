@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useNotificationStore } from '../../stores/notificationStore';
-import { useThemeStore } from '../../stores/themeStore';
+import { useNotificationStore } from '../../../stores/notificationStore';
+import { useThemeStore } from '../../../stores/themeStore';
 
 const props = defineProps({
   currentTab: { type: String, required: true }

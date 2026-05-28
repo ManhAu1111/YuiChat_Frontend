@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { useFriendshipStore } from '../../stores/friendshipStore';
+import { useFriendshipStore } from '../../../stores/friendshipStore';
 
 const props = defineProps({
   /**

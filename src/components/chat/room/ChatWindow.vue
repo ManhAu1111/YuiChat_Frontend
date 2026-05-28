@@ -1,11 +1,12 @@
 <script setup>
 import { watch, nextTick, ref, computed } from 'vue';
-import { useAuthStore } from '../../stores/auth';
-import { useChatStore } from '../../stores/chatStore';
-import { useThemeStore } from '../../stores/themeStore';
+import { useAuthStore } from '../../../stores/auth';
+import { useChatStore } from '../../../stores/chatStore';
+import { useThemeStore } from '../../../stores/themeStore';
 import ChatHeader from './ChatHeader.vue';
 import ChatInput from './ChatInput.vue';
-import GroupInfoPanel from './GroupInfoPanel.vue';
+import MessageBubble from './MessageBubble.vue';
+import GroupInfoPanel from '../info/GroupInfoPanel.vue';
 
 const props = defineProps(['chatId']);
 const emit = defineEmits(['back']);
@@ -144,36 +145,15 @@ const shouldShowAvatar = (idx) => {
 
       <!-- Message bubbles -->
       <TransitionGroup name="bubble" tag="div" class="space-y-1">
-        <div
+        <MessageBubble
           v-for="(msg, idx) in chatStore.currentMessages"
           :key="msg.id"
-          class="flex items-end gap-2"
-          :class="msg.sender_id === authStore.user?.id ? 'justify-end' : 'justify-start'"
-        >
-          <!-- Received: avatar placeholder for alignment -->
-          <div v-if="msg.sender_id !== authStore.user?.id" class="w-7 flex-shrink-0">
-            <img
-              v-if="shouldShowAvatar(idx)"
-              :src="getSender(msg.sender_id)?.avatar || 'https://ui-avatars.com/api/?name=' + (getSender(msg.sender_id)?.name || 'U') + '&background=e9e9eb&color=1d1d1f&size=56'"
-              class="w-7 h-7 rounded-full object-cover"
-            />
-          </div>
-
-          <!-- Bubble -->
-          <div
-            class="max-w-[65%] px-4 py-2.5 text-sm"
-            :class="msg.sender_id === authStore.user?.id ? 'bubble-sent' : 'bubble-received'"
-            style="letter-spacing: -0.224px; line-height: 1.47;"
-          >
-            <p class="whitespace-pre-wrap break-words">{{ msg.content }}</p>
-            <div class="flex justify-end mt-0.5">
-              <span class="text-[9px] opacity-50" style="letter-spacing: 0;">
-                {{ formatTime(msg.created_at) }}
-              </span>
-            </div>
-          </div>
-        </div>
-        </TransitionGroup>
+          :msg="msg"
+          :isMine="msg.sender_id === authStore.user?.id"
+          :sender="getSender(msg.sender_id)"
+          :showAvatar="shouldShowAvatar(idx)"
+        />
+      </TransitionGroup>
         </div>
 
         <ChatInput :conversationId="chatId" />
