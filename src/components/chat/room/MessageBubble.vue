@@ -32,9 +32,18 @@ const formatTime = (dateStr) => {
 
 const avatarUrl = computed(() => {
   const name = props.sender?.name || 'U';
-  return props.sender?.avatar ||
+  return props.sender?.avatar ? getFileUrl(props.sender.avatar) :
     `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e9e9eb&color=1d1d1f&size=56`;
 });
+
+const getFileUrl = (url) => {
+  if (!url) return '';
+  if (url.includes('/storage/')) {
+    const path = url.substring(url.indexOf('/storage/'));
+    return `http://${window.location.hostname}:8000${path}`;
+  }
+  return url;
+};
 </script>
 
 <template>
@@ -71,11 +80,11 @@ const avatarUrl = computed(() => {
         <div class="relative">
           <img
             v-if="attachment"
-            :src="attachment.file_url"
+            :src="getFileUrl(attachment.file_url)"
             :alt="attachment.file_name || 'Ảnh'"
             class="rounded-2xl max-w-full cursor-zoom-in object-cover"
             style="max-height: 300px;"
-            @click="lightboxSrc = attachment.file_url"
+            @click="lightboxSrc = getFileUrl(attachment.file_url)"
             loading="lazy"
           />
           <!-- Caption nếu có -->

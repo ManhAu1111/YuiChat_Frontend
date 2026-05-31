@@ -1,5 +1,6 @@
 <script setup>
 import { useThemeStore } from '../../../stores/themeStore';
+import { computed } from 'vue';
 
 const props = defineProps({
   attachment: { type: Object, required: true },
@@ -16,11 +17,21 @@ const formattedSize = (bytes) => {
 };
 
 const fileExtension = (name) => name?.split('.').pop()?.toUpperCase() || 'FILE';
+
+const fileUrl = computed(() => {
+  const url = props.attachment?.file_url;
+  if (!url) return '#';
+  if (url.includes('/storage/')) {
+    const path = url.substring(url.indexOf('/storage/'));
+    return `http://${window.location.hostname}:8000${path}`;
+  }
+  return url;
+});
 </script>
 
 <template>
   <a
-    :href="attachment.file_url"
+    :href="fileUrl"
     target="_blank"
     rel="noopener"
     download
