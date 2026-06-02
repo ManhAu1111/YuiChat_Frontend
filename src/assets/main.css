@@ -18,10 +18,88 @@
     text-rendering: optimizeLegibility;
   }
 
+  :root {
+    /* Default is Matcha (data-theme="matcha") */
+    --bg-primary: #fcfcfc;
+    --bg-secondary: #f4f5f4;
+    --text-primary: #1d1d1f;
+    --text-secondary: rgba(0, 0, 0, 0.5);
+    --text-tertiary: rgba(0, 0, 0, 0.3);
+    --accent-color: #10b981;
+    --accent-hover: #059669;
+    --accent-light: rgba(16, 185, 129, 0.15);
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --hover-bg: rgba(0, 0, 0, 0.04);
+    --border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  html.dark {
+    --bg-primary: #0a1110;
+    --bg-secondary: #121c1a;
+    --text-primary: #f8fafc;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-tertiary: rgba(255, 255, 255, 0.3);
+    --accent-color: #10b981;
+    --accent-hover: #34d399;
+    --accent-light: rgba(16, 185, 129, 0.2);
+    --glass-bg: rgba(0, 0, 0, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --hover-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  html[data-theme="amethyst"] {
+    --bg-primary: #fdfcff;
+    --bg-secondary: #f3f0f8;
+    --accent-color: #8b5cf6;
+    --accent-hover: #7c3aed;
+    --accent-light: rgba(139, 92, 246, 0.15);
+  }
+  html[data-theme="amethyst"].dark {
+    --bg-primary: #0f0a17;
+    --bg-secondary: #181225;
+    --accent-color: #a855f7;
+    --accent-hover: #d8b4fe;
+    --accent-light: rgba(168, 85, 247, 0.2);
+  }
+
+  html[data-theme="sunset"] {
+    --bg-primary: #fffbfa;
+    --bg-secondary: #f7f3f2;
+    --accent-color: #f43f5e;
+    --accent-hover: #e11d48;
+    --accent-light: rgba(244, 63, 94, 0.15);
+  }
+  html[data-theme="sunset"].dark {
+    --bg-primary: #1c1917;
+    --bg-secondary: #292524;
+    --accent-color: #fb7185;
+    --accent-hover: #fda4af;
+    --accent-light: rgba(251, 113, 133, 0.2);
+  }
+  
+  html[data-theme="blue"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f7;
+    --accent-color: #0071e3;
+    --accent-hover: #0077ed;
+    --accent-light: rgba(0, 113, 227, 0.15);
+  }
+  html[data-theme="blue"].dark {
+    --bg-primary: #000000;
+    --bg-secondary: #1d1d1f;
+    --accent-color: #0a84ff;
+    --accent-hover: #409cff;
+    --accent-light: rgba(10, 132, 255, 0.2);
+  }
+
   body {
-    @apply bg-apple-black text-white font-sans;
-    /* Apple: negative letter-spacing at body size */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: sans-serif;
     letter-spacing: -0.374px;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   #app {
@@ -32,6 +110,37 @@
   *:focus-visible {
     outline: 2px solid #0071e3;
     outline-offset: 2px;
+  }
+
+  /* ── Custom Scrollbars ── */
+  /* Hide by default, show on hover */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+  }
+  :hover::-webkit-scrollbar-thumb {
+    background: var(--text-tertiary);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox support */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.3s ease;
+  }
+  *:hover {
+    scrollbar-color: var(--text-tertiary) transparent;
   }
 }
 

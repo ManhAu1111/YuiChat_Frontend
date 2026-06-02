@@ -2,7 +2,12 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
 export const useThemeStore = defineStore('theme', () => {
-  const theme = ref(localStorage.getItem('theme') || 'system');
+  // mode: 'light', 'dark', 'system'
+  const mode = ref(localStorage.getItem('theme_mode') || 'system');
+  
+  // colorTheme: 'matcha', 'amethyst', 'sunset', 'blue'
+  const colorTheme = ref(localStorage.getItem('color_theme') || 'matcha');
+  
   const systemIsDark = ref(window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   // Lắng nghe sự thay đổi giao diện từ hệ thống
@@ -12,24 +17,34 @@ export const useThemeStore = defineStore('theme', () => {
   });
 
   const isDark = computed(() => {
-    if (theme.value === 'dark') return true;
-    if (theme.value === 'light') return false;
+    if (mode.value === 'dark') return true;
+    if (mode.value === 'light') return false;
     return systemIsDark.value;
   });
 
   const applyTheme = () => {
+    const html = document.documentElement;
+    
+    // Apply Mode
     if (isDark.value) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
+      html.classList.add('dark');
     } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
+      html.classList.remove('dark');
     }
+    
+    // Apply Color Theme
+    html.setAttribute('data-theme', colorTheme.value);
   };
 
-  const setTheme = (newTheme) => {
-    theme.value = newTheme;
-    localStorage.setItem('theme', newTheme);
+  const setMode = (newMode) => {
+    mode.value = newMode;
+    localStorage.setItem('theme_mode', newMode);
+    applyTheme();
+  };
+
+  const setColorTheme = (newTheme) => {
+    colorTheme.value = newTheme;
+    localStorage.setItem('color_theme', newTheme);
     applyTheme();
   };
 
@@ -37,9 +52,11 @@ export const useThemeStore = defineStore('theme', () => {
   applyTheme();
 
   return {
-    theme,
+    mode,
+    colorTheme,
     isDark,
-    setTheme,
+    setMode,
+    setColorTheme,
     applyTheme
   };
 });

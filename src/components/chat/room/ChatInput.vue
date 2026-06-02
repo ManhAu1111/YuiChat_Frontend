@@ -1,80 +1,96 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useChatStore } from '../../../stores/chatStore';
-import { useThemeStore } from '../../../stores/themeStore';
 import api from '../../../services/api';
 import AttachmentPreview from './AttachmentPreview.vue';
 
 const props = defineProps(['conversationId']);
 const chatStore = useChatStore();
-const themeStore = useThemeStore();
 
 const messageText = ref('');
 const isSending = ref(false);
 const isFocused = ref(false);
-const selectedFile = ref(null); // { file, previewUrl, name, size, type, isUploading, progress }
+const selectedFiles = ref([]); // mảng các object: { id, file, previewUrl, name, size, type, isUploading, progress }
 const fileInputRef = ref(null);
+const imageInputRef = ref(null);
 const errorMsg = ref('');
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_FILE_SIZE  = 50 * 1024 * 1024; // 50 MB
-
-const inputStyle = computed(() => {
-  const isDark = themeStore.isDark;
-  return {
-    background: isDark
-      ? (isFocused.value ? '#2a2a2d' : '#272729')
-      : (isFocused.value ? '#ffffff' : '#f5f5f7'),
-    color: isDark ? '#ffffff' : '#1d1d1f',
-    borderColor: isFocused.value ? '#0071e3' : 'transparent',
-    borderStyle: 'solid',
-    borderWidth: '1px',
-    letterSpacing: '-0.224px',
-    lineHeight: '1.47',
-  };
-});
+const MAX_IMAGES = 9;
+const MAX_FILES = 3;
 
 // Mở file picker
 const openFilePicker = () => fileInputRef.value?.click();
+const openImagePicker = () => imageInputRef.value?.click();
 
 // Xử lý khi user chọn file
 const onFileSelected = (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
   errorMsg.value = '';
 
-  const isImage = file.type.startsWith('image/');
-  const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
+  let currentType = selectedFiles.value.length > 0 
+    ? (selectedFiles.value[0].type.startsWith('image/') ? 'image' : 'file') 
+    : null;
 
-  if (file.size > maxSize) {
-    errorMsg.value = isImage
-      ? 'Ảnh không được vượt quá 10MB.'
-      : 'File không được vượt quá 50MB.';
-    event.target.value = '';
-    return;
+  for (const file of files) {
+    const isImage = file.type.startsWith('image/');
+    const fileType = isImage ? 'image' : 'file';
+
+    if (currentType && currentType !== fileType) {
+      errorMsg.value = 'Không thể gửi ảnh và file cùng lúc.';
+      continue;
+    }
+    currentType = fileType;
+
+    const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_FILE_SIZE;
+    if (file.size > maxSize) {
+      errorMsg.value = isImage ? 'Ảnh không được vượt quá 10MB.' : 'File không được vượt quá 50MB.';
+      continue;
+    }
+
+    if (isImage && selectedFiles.value.length >= MAX_IMAGES) {
+      errorMsg.value = `Tối đa ${MAX_IMAGES} ảnh một lần.`;
+      break;
+    }
+    if (!isImage && selectedFiles.value.length >= MAX_FILES) {
+      errorMsg.value = `Tối đa ${MAX_FILES} file một lần.`;
+      break;
+    }
+
+    const previewUrl = isImage ? URL.createObjectURL(file) : null;
+    selectedFiles.value.push({
+      id: Date.now() + Math.random(),
+      file,
+      previewUrl,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      isUploading: false,
+      progress: 0,
+    });
   }
 
-  const previewUrl = isImage ? URL.createObjectURL(file) : null;
-  selectedFile.value = {
-    file,
-    previewUrl,
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    isUploading: false,
-    progress: 0,
-  };
   // Reset input để có thể chọn lại cùng file
   event.target.value = '';
+  
+  // Focus lại input để người dùng có thể nhấn Enter gửi luôn
+  nextTick(() => {
+    document.getElementById('chat-message-input')?.focus();
+  });
 };
 
 // Xóa file đã chọn
-const removeFile = () => {
-  if (selectedFile.value?.previewUrl) {
-    URL.revokeObjectURL(selectedFile.value.previewUrl);
+const removeFile = (index) => {
+  const file = selectedFiles.value[index];
+  if (file?.previewUrl) {
+    URL.revokeObjectURL(file.previewUrl);
   }
-  selectedFile.value = null;
-  errorMsg.value = '';
+  selectedFiles.value.splice(index, 1);
+  if (selectedFiles.value.length === 0) {
+    errorMsg.value = '';
+  }
 };
 
 // Upload file lên server
@@ -83,49 +99,59 @@ const uploadFile = async (fileObj) => {
   formData.append('file', fileObj.file);
   formData.append('context', fileObj.type.startsWith('image/') ? 'image' : 'file');
 
-  selectedFile.value.isUploading = true;
+  fileObj.isUploading = true;
 
   try {
     const response = await api.post('/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: (e) => {
-        if (selectedFile.value) {
-          selectedFile.value.progress = Math.round((e.loaded * 100) / (e.total || 1));
-        }
+        fileObj.progress = Math.round((e.loaded * 100) / (e.total || 1));
       },
     });
     return response.data;
   } finally {
-    if (selectedFile.value) selectedFile.value.isUploading = false;
+    fileObj.isUploading = false;
   }
 };
 
 // Gửi tin nhắn (text hoặc file)
 const sendMessage = async () => {
   const hasText = messageText.value.trim();
-  const hasFile = !!selectedFile.value;
-  if ((!hasText && !hasFile) || isSending.value) return;
+  const hasFiles = selectedFiles.value.length > 0;
+  if ((!hasText && !hasFiles) || isSending.value) return;
+
+  const isUploadingAny = selectedFiles.value.some(f => f.isUploading);
+  if (isUploadingAny) return; // Wait until all are done or don't allow sending while uploading
 
   isSending.value = true;
   errorMsg.value = '';
 
   try {
-    if (hasFile) {
-      // Upload file rồi gửi
-      const uploadResult = await uploadFile(selectedFile.value);
-      const msgType = uploadResult.context === 'image' ? 'image' : 'file';
+    if (hasFiles) {
+      // Upload tất cả các file
+      const uploadPromises = selectedFiles.value.map(fileObj => uploadFile(fileObj));
+      const results = await Promise.all(uploadPromises);
+
+      const attachments = results.map(res => ({
+        file_url: res.url,
+        file_name: res.file_name,
+        file_type: res.file_type,
+        file_size: res.file_size
+      }));
+
+      const msgType = selectedFiles.value[0].type.startsWith('image/') ? 'image' : 'file';
 
       await chatStore.sendFileMessage(props.conversationId, {
-        url: uploadResult.url,
-        fileName: uploadResult.file_name,
-        fileType: uploadResult.file_type,
-        fileSize: uploadResult.file_size,
+        attachments,
         content: hasText || null,
         msgType,
       });
 
       messageText.value = '';
-      removeFile();
+      selectedFiles.value.forEach(f => {
+        if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
+      });
+      selectedFiles.value = [];
     } else {
       // Chỉ gửi text
       const content = messageText.value;
@@ -142,84 +168,124 @@ const sendMessage = async () => {
 </script>
 
 <template>
-  <div class="flex-shrink-0 transition-colors duration-300"
-    :style="themeStore.isDark
-      ? 'background:#1d1d1f; border-top:1px solid rgba(255,255,255,0.08);'
-      : 'background:#ffffff; border-top:1px solid rgba(0,0,0,0.08);'"
-  >
-    <!-- Preview file đã chọn -->
-    <AttachmentPreview
-      v-if="selectedFile"
-      :file="selectedFile"
-      @remove="removeFile"
-    />
-
+  <div class="flex-shrink-0 transition-colors duration-300 pb-4 pt-2 px-4 relative z-10"
+       style="background: linear-gradient(to top, var(--bg-primary) 30%, transparent);">
+    
     <!-- Thông báo lỗi -->
-    <p v-if="errorMsg" class="px-4 pb-1 text-xs text-red-500">{{ errorMsg }}</p>
+    <p v-if="errorMsg" class="px-2 pb-2 text-xs text-red-500 font-medium">{{ errorMsg }}</p>
 
-    <!-- Input row -->
-    <div class="flex items-center gap-3 px-4 py-3">
+    <!-- Command Bar Container -->
+    <div class="flex flex-col transition-all duration-300 rounded-[24px] overflow-hidden"
+         :style="isFocused 
+            ? 'background: var(--bg-primary); border: 1px solid var(--accent-color); box-shadow: 0 4px 20px rgba(0,0,0,0.1);' 
+            : 'background: var(--bg-secondary); border: 1px solid var(--border-color);'">
 
-      <!-- Hidden file input -->
-      <input
-        ref="fileInputRef"
-        type="file"
-        class="hidden"
-        accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv"
-        @change="onFileSelected"
-      />
+      <!-- Preview file đã chọn -->
+      <div v-if="selectedFiles.length > 0" class="flex overflow-x-auto px-2 py-2 gap-2 scrollbar-hide">
+        <AttachmentPreview
+          v-for="(file, index) in selectedFiles"
+          :key="file.id"
+          :file="file"
+          @remove="removeFile(index)"
+        />
+      </div>
 
-      <!-- Nút đính kèm -->
-      <button
-        @click="openFilePicker"
-        :disabled="isSending"
-        class="flex-shrink-0 p-2 rounded-full transition-colors"
-        :style="themeStore.isDark ? 'color:rgba(255,255,255,0.5);' : 'color:rgba(0,0,0,0.35);'"
-        aria-label="Đính kèm tệp"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
-        </svg>
-      </button>
+      <!-- Input row -->
+      <div class="flex items-end gap-2 px-2 py-2">
 
-      <!-- Message input -->
-      <div class="flex-1 relative">
+        <!-- Hidden file/image inputs -->
         <input
-          id="chat-message-input"
-          type="text"
-          v-model="messageText"
-          @keyup.enter="sendMessage"
-          :placeholder="selectedFile ? 'Thêm tin nhắn (tùy chọn)...' : 'Nhập tin nhắn...'"
-          class="w-full px-4 py-2.5 pr-11 rounded-apple-pill text-sm outline-none transition-all duration-300"
-          :style="inputStyle"
-          @focus="isFocused = true"
-          @blur="isFocused = false"
-          :disabled="isSending"
+          ref="imageInputRef"
+          type="file"
+          class="hidden"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          multiple
+          @change="onFileSelected"
+        />
+        <input
+          ref="fileInputRef"
+          type="file"
+          class="hidden"
+          accept="application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv"
+          multiple
+          @change="onFileSelected"
         />
 
-        <!-- Nút gửi: hiện khi có text HOẶC có file -->
-        <Transition name="send-fade">
+        <!-- Action Buttons (Left) -->
+        <div class="flex items-center pb-[2px]">
+          <!-- Nút đính kèm ảnh -->
           <button
-            v-if="messageText.trim() || selectedFile"
-            @click="sendMessage"
-            :disabled="isSending || selectedFile?.isUploading"
-            id="chat-send-btn"
-            class="absolute right-2 inset-y-0 my-auto flex items-center justify-center w-7 h-7 rounded-full transition-all active:scale-90 disabled:opacity-50"
-            style="background:#0071e3;"
-            aria-label="Gửi"
+            @click="openImagePicker"
+            :disabled="isSending"
+            class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+            style="color: var(--text-secondary);"
+            onmouseover="this.style.background='var(--hover-bg)'"
+            onmouseout="this.style.background='transparent'"
+            aria-label="Đính kèm ảnh"
           >
-            <!-- Spinner khi đang upload/gửi -->
-            <svg v-if="isSending" class="w-3.5 h-3.5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-            <!-- Icon gửi bình thường -->
-            <svg v-else class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+            <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
           </button>
-        </Transition>
+
+          <!-- Nút đính kèm file -->
+          <button
+            @click="openFilePicker"
+            :disabled="isSending"
+            class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
+            style="color: var(--text-secondary);"
+            onmouseover="this.style.background='var(--hover-bg)'"
+            onmouseout="this.style.background='transparent'"
+            aria-label="Đính kèm tệp"
+          >
+            <svg class="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Message input -->
+        <div class="flex-1 min-w-0 pb-[4px]">
+          <input
+            id="chat-message-input"
+            type="text"
+            v-model="messageText"
+            @keyup.enter="sendMessage"
+            :placeholder="selectedFiles.length > 0 ? `Đã chọn ${selectedFiles.length} tệp đính kèm...` : 'Nhập tin nhắn...'"
+            class="w-full bg-transparent px-2 py-1.5 text-[15px] outline-none"
+            style="color: var(--text-primary);"
+            @focus="isFocused = true"
+            @blur="isFocused = false"
+            :disabled="isSending"
+          />
+        </div>
+
+        <!-- Nút gửi (Right) -->
+        <div class="pb-[3px] pr-1">
+          <Transition name="send-fade">
+            <button
+              v-if="messageText.trim() || selectedFiles.length > 0"
+              @click="sendMessage"
+              :disabled="isSending || selectedFiles.some(f => f.isUploading)"
+              id="chat-send-btn"
+              class="flex items-center justify-center w-8 h-8 rounded-full transition-all active:scale-90 disabled:opacity-50 shadow-sm"
+              style="background: var(--accent-color);"
+              aria-label="Gửi"
+            >
+              <!-- Spinner khi đang upload/gửi -->
+              <svg v-if="isSending" class="w-[18px] h-[18px] text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              <!-- Icon gửi bình thường -->
+              <svg v-else class="w-[16px] h-[16px] text-white ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19V5M5 12l7-7 7 7"/>
+              </svg>
+            </button>
+          </Transition>
+        </div>
       </div>
     </div>
   </div>
@@ -234,5 +300,13 @@ const sendMessage = async () => {
 .send-fade-leave-to {
   opacity: 0;
   transform: scale(0.7);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

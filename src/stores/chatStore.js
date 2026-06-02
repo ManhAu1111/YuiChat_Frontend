@@ -285,28 +285,30 @@ export const useChatStore = defineStore('chat', {
         throw error;
       }
     },
-    async sendFileMessage(conversationId, { url, fileName, fileType, fileSize, content, msgType }) {
+    async sendFileMessage(conversationId, { attachments, content, msgType }) {
       const authStore = useAuthStore();
 
       // 1. Tạo tin nhắn ảo (Optimistic UI)
       const tempId = 'temp_file_' + Date.now();
+      
+      const metadata = attachments.length === 1 
+        ? { file_name: attachments[0].file_name, file_size: attachments[0].file_size, file_type: attachments[0].file_type }
+        : { file_count: attachments.length };
+        
       const tempMessage = {
         id: tempId,
         conversation_id: conversationId,
         sender_id: authStore.user?.id,
         content: content || null,
         type: msgType,
-        metadata: { file_name: fileName, file_size: fileSize, file_type: fileType },
-        attachments: [{ file_url: url, file_name: fileName, file_type: fileType, file_size: fileSize }],
+        metadata: metadata,
+        attachments: attachments,
         created_at: new Date().toISOString(),
         is_sending: true,
       };
 
       if (this.activeConversationId === conversationId) {
         this.currentMessages.push(tempMessage);
-        if (this.messagesCache[conversationId]) {
-          this.messagesCache[conversationId].push(tempMessage);
-        }
       }
 
       try {
@@ -314,10 +316,7 @@ export const useChatStore = defineStore('chat', {
         const response = await api.post(`/conversations/${conversationId}/messages`, {
           content: content || null,
           type: msgType,
-          attachment_url: url,
-          file_name: fileName,
-          file_type: fileType,
-          file_size: fileSize,
+          attachments: attachments,
         });
 
         const realMessage = response.data;
@@ -348,10 +347,8 @@ export const useChatStore = defineStore('chat', {
       } catch (error) {
         // Rollback: xóa tin nhắn ảo
         if (this.activeConversationId === conversationId) {
-          this.currentMessages = this.currentMessages.filter(m => m.id !== tempId);
-          if (this.messagesCache[conversationId]) {
-            this.messagesCache[conversationId] = this.messagesCache[conversationId].filter(m => m.id !== tempId);
-          }
+          const idx = this.currentMessages.findIndex(m => m.id === tempId);
+          if (idx !== -1) this.currentMessages.splice(idx, 1);
         }
         console.error('Lỗi gửi file:', error);
         throw error;

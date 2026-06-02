@@ -12,7 +12,7 @@ const formatOfflineTime = (dateStr) => {
   const diffMs = now - lastActive;
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'Vừa mới truy cập';
+  if (diffMins < 1) return 'Vừa truy cập';
   if (diffMins < 60) return `Hoạt động ${diffMins} phút trước`;
   
   const diffHours = Math.floor(diffMins / 60);
@@ -26,11 +26,8 @@ const formatOfflineTime = (dateStr) => {
 </script>
 
 <template>
-  <!--
-    Apple Design: ChatHeader hỗ trợ Dark Theme
-  -->
-  <div class="h-16 flex items-center justify-between px-5 flex-shrink-0 transition-colors duration-300"
-       :style="themeStore.isDark ? 'background: #1d1d1f; border-bottom: 1px solid rgba(255,255,255,0.08);' : 'background: #ffffff; border-bottom: 1px solid rgba(0,0,0,0.08);'">
+  <div class="h-[68px] flex items-center justify-between px-5 flex-shrink-0 transition-colors duration-300 relative z-10"
+       style="background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); backdrop-filter: saturate(180%) blur(20px);">
 
     <!-- Left: back + user info -->
     <div class="flex items-center gap-3">
@@ -38,7 +35,7 @@ const formatOfflineTime = (dateStr) => {
       <button
         @click="emit('back')"
         class="md:hidden -ml-1 p-1.5 rounded-full transition-colors"
-        :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'"
+        style="color: var(--text-primary);"
         aria-label="Quay lại"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,25 +46,24 @@ const formatOfflineTime = (dateStr) => {
       <!-- Avatar -->
       <div class="relative flex-shrink-0">
         <img
-          :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&background=f5f5f7&color=1d1d1f'"
+          :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&background=random'"
           alt="Avatar"
-          class="w-9 h-9 rounded-full object-cover transition-colors duration-300"
-          :style="themeStore.isDark ? 'background: #272729;' : 'background: #f5f5f7;'"
+          class="w-10 h-10 rounded-full object-cover transition-colors duration-300"
+          style="background: var(--hover-bg);"
         />
         <div v-if="user?.is_online"
-             class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 transition-colors duration-300"
-             :style="themeStore.isDark ? 'background: #32d74b; border-color: #1d1d1f;' : 'background: #32d74b; border-color: #ffffff;'"></div>
+             class="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] transition-colors duration-300"
+             style="background: #32d74b; border-color: var(--glass-bg);"></div>
       </div>
 
       <!-- Name + status -->
-      <div>
+      <div class="flex flex-col justify-center">
         <h2 class="font-semibold leading-tight transition-colors duration-300"
-            style="font-size: 15px; letter-spacing: -0.224px;"
-            :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
+            style="font-size: 16px; letter-spacing: -0.3px; color: var(--text-primary);">
           {{ user?.name || 'Đang tải...' }}
         </h2>
-        <p v-if="!user?.is_group" class="text-[11px]" style="letter-spacing: -0.08px;"
-           :style="user?.is_online ? 'color: #32d74b;' : (themeStore.isDark ? 'color: rgba(255,255,255,0.4);' : 'color: rgba(0,0,0,0.4);')">
+        <p v-if="!user?.is_group" class="text-[12px] mt-0.5 transition-colors duration-300" style="letter-spacing: -0.1px;"
+           :style="user?.is_online ? 'color: #32d74b;' : 'color: var(--text-secondary);'">
           {{ user?.is_online ? 'Đang hoạt động' : formatOfflineTime(user?.last_active_at) }}
         </p>
       </div>
@@ -77,7 +73,9 @@ const formatOfflineTime = (dateStr) => {
     <div class="flex items-center gap-1">
       <button
         class="p-2 rounded-full transition-colors"
-        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
+        style="color: var(--text-secondary);"
+        onmouseover="this.style.background='var(--hover-bg)'"
+        onmouseout="this.style.background='transparent'"
         aria-label="Tìm kiếm"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +86,9 @@ const formatOfflineTime = (dateStr) => {
 
       <button
         class="p-2 rounded-full transition-colors"
-        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
+        style="color: var(--text-secondary);"
+        onmouseover="this.style.background='var(--hover-bg)'"
+        onmouseout="this.style.background='transparent'"
         aria-label="Gọi điện"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +99,9 @@ const formatOfflineTime = (dateStr) => {
 
       <button
         class="p-2 rounded-full transition-colors"
-        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
+        style="color: var(--text-secondary);"
+        onmouseover="this.style.background='var(--hover-bg)'"
+        onmouseout="this.style.background='transparent'"
         aria-label="Video call"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +115,9 @@ const formatOfflineTime = (dateStr) => {
         v-if="user?.is_group"
         @click="emit('open-info')"
         class="p-2 rounded-full transition-colors"
-        :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.48);'"
+        style="color: var(--text-secondary);"
+        onmouseover="this.style.background='var(--hover-bg)'"
+        onmouseout="this.style.background='transparent'"
         aria-label="Thông tin nhóm"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
