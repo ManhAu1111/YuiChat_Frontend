@@ -10,14 +10,12 @@ import NotificationPanel from '../components/chat/notifications/NotificationPane
 import { ref, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useChatStore } from '../stores/chatStore';
-import { useThemeStore } from '../stores/themeStore';
 
 const selectedChatId = ref(null);
 const currentTab = ref('messages');
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
-const themeStore = useThemeStore();
 
 const handleSelectChat = (chatId) => {
   selectedChatId.value = chatId;
@@ -42,36 +40,30 @@ onMounted(async () => {
 </script>
 
 <template>
-  <!-- Apple Design: Hỗ trợ chuyển đổi Sáng/Tối mượt mà -->
   <div class="flex h-screen overflow-hidden font-sans transition-colors duration-300"
-       :style="themeStore.isDark ? 'background: #000000;' : 'background: #ffffff;'">
+       style="background: var(--bg-primary); color: var(--text-primary);">
 
     <!-- ── Sidebar ── -->
     <aside
       class="flex flex-col h-full flex-shrink-0 transition-all duration-300"
       :class="[
         'w-full md:w-[320px]',
-        (!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex',
-        themeStore.isDark ? 'dark-surface' : ''
+        (!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex'
       ]"
-      :style="themeStore.isDark
-        ? 'background: #1d1d1f; border-right: 1px solid rgba(255,255,255,0.08);'
-        : 'background: #f5f5f7; border-right: 1px solid rgba(0,0,0,0.08);'"
+      style="background: var(--bg-secondary); border-right: 1px solid var(--border-color);"
     >
       <!-- Sidebar Header -->
-      <div class="flex items-center px-5 h-14 flex-shrink-0 border-b transition-colors duration-300"
-           :style="themeStore.isDark
-             ? 'background: rgba(0,0,0,0.82); border-color: rgba(255,255,255,0.07); backdrop-filter: saturate(180%) blur(20px);'
-             : 'background: rgba(245,245,247,0.82); border-color: rgba(0,0,0,0.08); backdrop-filter: saturate(180%) blur(20px);'">
+      <div class="flex items-center px-5 h-[68px] flex-shrink-0 transition-colors duration-300 relative z-10"
+           style="background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); backdrop-filter: saturate(180%) blur(20px);">
         <h1 class="font-display font-semibold transition-colors duration-300"
-            style="font-size: 21px; letter-spacing: 0.231px; line-height: 1.19;"
-            :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
+            style="font-size: 21px; letter-spacing: -0.4px; color: var(--text-primary);">
           YuiChat
         </h1>
       </div>
 
       <!-- Chat List fills remaining space -->
-      <div class="flex-1 overflow-hidden flex flex-col">
+      <div class="flex-1 overflow-hidden flex flex-col relative z-0">
+        <!-- Pass tab id to ChatList if needed, else it manages its own state -->
         <ChatList @select-chat="handleSelectChat" />
       </div>
 
@@ -81,13 +73,14 @@ onMounted(async () => {
 
     <!-- ── Main Area ── -->
     <main
-      class="flex-1 flex flex-col overflow-hidden transition-colors duration-300"
+      class="flex-1 flex flex-col overflow-hidden transition-colors duration-300 relative"
       :class="(selectedChatId || currentTab !== 'messages') ? 'flex' : 'hidden md:flex'"
-      :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'"
+      style="background: var(--bg-primary);"
     >
       <!-- Chat window -->
       <ChatWindow
         v-if="currentTab === 'messages' && selectedChatId"
+        :key="selectedChatId"
         :chatId="selectedChatId"
         @back="handleBackToList"
       />
@@ -98,24 +91,21 @@ onMounted(async () => {
       <ProfilePlaceholder     v-else-if="currentTab === 'profile'"       @back="handleBackToList" />
       <SettingsPlaceholder    v-else-if="currentTab === 'settings'"      @back="handleBackToList" />
 
-      <!-- Empty state — Apple style: centered, monochrome -->
-      <div v-else
-           class="hidden md:flex flex-col flex-1 items-center justify-center text-center p-12 transition-colors duration-300"
-           :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'">
-        <div class="mb-8">
-          <svg class="w-20 h-20 mx-auto transition-colors duration-300" fill="none" :stroke="themeStore.isDark ? 'rgba(255,255,255,0.2)' : '#c7c7cc'" stroke-width="1.2" viewBox="0 0 24 24">
+      <!-- Empty state -->
+      <div v-else class="hidden md:flex flex-col flex-1 items-center justify-center text-center p-12 transition-colors duration-300">
+        <div class="mb-6 rounded-full flex items-center justify-center w-16 h-16"
+             style="background: var(--hover-bg);">
+          <svg class="w-8 h-8 transition-colors duration-300" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </div>
-        <h2 class="font-display font-semibold mb-3 transition-colors duration-300"
-            style="font-size: 28px; line-height: 1.14; letter-spacing: 0.196px;"
-            :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">
-          Chào mừng đến YuiChat
+        <h2 class="font-display font-medium mb-2 transition-colors duration-300"
+            style="font-size: 22px; letter-spacing: -0.4px; color: var(--text-primary);">
+          YuiChat
         </h2>
-        <p class="max-w-xs transition-colors duration-300"
-           style="font-size: 17px; line-height: 1.47; letter-spacing: -0.374px;"
-           :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.48);'">
+        <p class="max-w-[240px] transition-colors duration-300"
+           style="font-size: 15px; line-height: 1.5; letter-spacing: -0.2px; color: var(--text-secondary);">
           Chọn một cuộc trò chuyện ở bên trái để bắt đầu nhắn tin.
         </p>
       </div>
