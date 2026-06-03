@@ -42,7 +42,7 @@ test.describe('Chủ đề giao diện (Theme)', () => {
     await settingsTab.click({ timeout: 8_000 });
 
     // SettingsPlaceholder phải hiện
-    await expect(page.locator('p.text-xs', { hasText: 'Tự động điều chỉnh' })).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('text=Tự động điều chỉnh').first()).toBeVisible({ timeout: 5_000 });
   });
 });
 

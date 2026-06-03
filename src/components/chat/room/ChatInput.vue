@@ -15,6 +15,13 @@ const fileInputRef = ref(null);
 const imageInputRef = ref(null);
 const errorMsg = ref('');
 
+const autoResize = (event) => {
+  const el = event.target || event;
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight) + 'px';
+};
+
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_FILE_SIZE  = 50 * 1024 * 1024; // 50 MB
 const MAX_IMAGES = 9;
@@ -148,6 +155,10 @@ const sendMessage = async () => {
       });
 
       messageText.value = '';
+      nextTick(() => {
+        const el = document.getElementById('chat-message-input');
+        if (el) el.style.height = 'auto';
+      });
       selectedFiles.value.forEach(f => {
         if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
       });
@@ -156,6 +167,10 @@ const sendMessage = async () => {
       // Chỉ gửi text
       const content = messageText.value;
       messageText.value = '';
+      nextTick(() => {
+        const el = document.getElementById('chat-message-input');
+        if (el) el.style.height = 'auto';
+      });
       await chatStore.sendMessage(props.conversationId, content);
     }
   } catch (err) {
@@ -164,6 +179,19 @@ const sendMessage = async () => {
   } finally {
     isSending.value = false;
   }
+};
+
+// Xử lý sự kiện nhấn Enter
+const handleEnter = (event) => {
+  // Kiểm tra thiết bị: nếu màn hình nhỏ (mobile/tablet) hoặc có cảm ứng
+  const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+  
+  if (!isMobile) {
+    // Trên máy tính: Enter để gửi, ngăn chặn xuống dòng mặc định
+    event.preventDefault();
+    sendMessage();
+  }
+  // Trên điện thoại: không gọi preventDefault() để textarea tự động thêm dòng mới
 };
 </script>
 
@@ -248,18 +276,19 @@ const sendMessage = async () => {
 
         <!-- Message input -->
         <div class="flex-1 min-w-0 pb-[4px]">
-          <input
+          <textarea
             id="chat-message-input"
-            type="text"
             v-model="messageText"
-            @keyup.enter="sendMessage"
+            @keydown.enter.exact="handleEnter"
+            @input="autoResize"
             :placeholder="selectedFiles.length > 0 ? `Đã chọn ${selectedFiles.length} tệp đính kèm...` : 'Nhập tin nhắn...'"
-            class="w-full bg-transparent px-2 py-1.5 text-[15px] outline-none"
-            style="color: var(--text-primary);"
+            class="w-full bg-transparent px-2 py-1.5 text-[15px] outline-none resize-none scrollbar-hide"
+            rows="1"
+            style="color: var(--text-primary); max-height: 120px;"
             @focus="isFocused = true"
             @blur="isFocused = false"
             :disabled="isSending"
-          />
+          ></textarea>
         </div>
 
         <!-- Nút gửi (Right) -->

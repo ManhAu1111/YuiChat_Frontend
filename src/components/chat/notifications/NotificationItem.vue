@@ -99,6 +99,15 @@ const handleClick = () => {
           <span :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.6);'" v-else-if="noti.type?.includes('FriendDeclinedNoti')">
              đã từ chối lời mời kết bạn
           </span>
+          <template v-else-if="noti.type === 'NewMessageNoti'">
+            <span v-if="noti.data?.is_group" class="font-semibold">Nhóm "{{ noti.data?.group_name }}"</span>
+            <span v-else class="font-semibold">{{ noti.data?.sender_name || 'Ai đó' }}</span>
+            <span :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.6);'">
+               <template v-if="noti.data?.is_group">: {{ noti.data?.actual_sender_name }}: </template>
+               <template v-else>: </template>
+               <span class="line-clamp-1 break-all">{{ noti.data?.content }}</span>
+            </span>
+          </template>
           <span :style="themeStore.isDark ? 'color: rgba(255,255,255,0.6);' : 'color: rgba(0,0,0,0.6);'" v-else>
              đã gửi một thông báo
           </span>

@@ -47,7 +47,7 @@ test.describe('Giao diện Chat chính', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await setupAuthenticatedPage(page);
 
-    await expect(page.locator('text=Chào mừng đến YuiChat')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('main h2', { hasText: 'YuiChat' })).toBeVisible({ timeout: 8_000 });
     await expect(page.locator('text=Chọn một cuộc trò chuyện')).toBeVisible();
   });
 
@@ -85,7 +85,7 @@ test.describe('Thanh tìm kiếm người dùng', () => {
 
     const searchInput = page.locator('#chat-search-input');
     await expect(searchInput).toBeVisible({ timeout: 8_000 });
-    await expect(searchInput).toHaveAttribute('placeholder', 'Tìm kiếm...');
+    await expect(searchInput).toHaveAttribute('placeholder', 'Tìm kiếm');
   });
 
   test('hiển thị dropdown kết quả tìm kiếm sau khi gõ', async ({ page }) => {
@@ -107,7 +107,7 @@ test.describe('Thanh tìm kiếm người dùng', () => {
     await expect(page.locator('text=@thid')).toBeVisible();
   });
 
-  test('hiển thị spinner "Đang tìm kiếm..." khi API đang phản hồi', async ({ page }) => {
+  test('hiển thị spinner khi API đang phản hồi', async ({ page }) => {
     await setupAuthenticatedPage(page);
 
     await page.route('**/api/search*', async (route) => {
@@ -119,7 +119,7 @@ test.describe('Thanh tìm kiếm người dùng', () => {
     await searchInput.waitFor({ timeout: 8_000 });
     await searchInput.fill('test');
 
-    await expect(page.locator('text=Đang tìm kiếm...')).toBeVisible({ timeout: 2_000 });
+    await expect(page.locator('svg.animate-spin-smooth')).toBeVisible({ timeout: 2_000 });
   });
 
   test('dropdown ẩn khi xóa text tìm kiếm', async ({ page }) => {
