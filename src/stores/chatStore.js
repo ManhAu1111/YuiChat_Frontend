@@ -41,6 +41,57 @@ export const useChatStore = defineStore('chat', {
               const authStore = useAuthStore();
               if (this.activeConversationId !== conversationId && newMessage.sender_id !== authStore.user?.id) {
                 this.conversations[convIndex].unread = (this.conversations[convIndex].unread || 0) + 1;
+                
+                import('./notificationStore.js').then(({ useNotificationStore }) => {
+                  const notificationStore = useNotificationStore();
+                  const conversation = this.conversations[convIndex];
+
+                  let targetName = 'Ai đó';
+                  let targetAvatar = '';
+                  let isGroup = conversation.is_group;
+                  let groupName = conversation.name || 'Nhóm';
+                  
+                  let actualSenderName = 'Ai đó';
+                  if (conversation.participants) {
+                    const sender = conversation.participants.find(p => p.user_id === newMessage.sender_id);
+                    if (sender && sender.user) {
+                      actualSenderName = sender.user.name;
+                    }
+                  }
+                  
+                  if (isGroup) {
+                    targetName = groupName;
+                    targetAvatar = conversation.avatar || '';
+                  } else if (conversation.participants && authStore.user?.id) {
+                    const participant = conversation.participants.find(p => p.user_id !== authStore.user.id);
+                    if (participant && participant.user) {
+                      targetName = participant.user.name || 'Ai đó';
+                      targetAvatar = participant.user.avatar || '';
+                    }
+                  }
+                  
+                  if (!targetAvatar) {
+                    targetAvatar = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(targetName || 'U') + '&background=random';
+                  }
+
+                  let contentDisplay = newMessage.content;
+                  if (!contentDisplay && newMessage.type !== 'text') {
+                     contentDisplay = 'Đã gửi tệp đính kèm';
+                  }
+                  notificationStore.showToast({
+                    id: 'msg_' + newMessage.id,
+                    type: 'NewMessageNoti',
+                    data: {
+                      is_group: isGroup,
+                      group_name: groupName,
+                      sender_name: targetName,
+                      actual_sender_name: actualSenderName,
+                      content: contentDisplay,
+                      avatar: targetAvatar,
+                      conversation_id: conversationId
+                    }
+                  });
+                });
               }
 
               // Đưa lên đầu danh sách

@@ -3,13 +3,18 @@ import { onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { useFriendshipStore } from '../../../stores/friendshipStore';
 import { useThemeStore } from '../../../stores/themeStore';
+import { useChatStore } from '../../../stores/chatStore';
 import NotificationItem from './NotificationItem.vue';
 
 const notificationStore = useNotificationStore();
 const friendshipStore = useFriendshipStore();
 const themeStore = useThemeStore();
+const chatStore = useChatStore();
 
-const dismissToast = (noti) => {
+const handleClickToast = (noti) => {
+  if (noti.type === 'NewMessageNoti' && noti.data?.conversation_id) {
+    chatStore.activeConversationId = noti.data.conversation_id;
+  }
   notificationStore.dismissToast(noti.id);
 };
 
@@ -36,7 +41,7 @@ const handleDeclineFromToast = (noti) => {
           v-for="noti in notificationStore.toastQueue"
           :key="noti.id"
           class="w-full pointer-events-auto"
-          @click="dismissToast(noti)"
+          @click="handleClickToast(noti)"
         >
           <NotificationItem
             :noti="noti"

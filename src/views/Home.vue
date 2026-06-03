@@ -7,7 +7,8 @@ import ProfilePlaceholder from '../components/chat/tabs/ProfilePlaceholder.vue';
 import SettingsPlaceholder from '../components/chat/tabs/SettingsPlaceholder.vue';
 import NotificationPanel from '../components/chat/notifications/NotificationPanel.vue';
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useChatStore } from '../stores/chatStore';
 
@@ -16,6 +17,40 @@ const currentTab = ref('messages');
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
+const route = useRoute();
+const router = useRouter();
+
+watch(() => chatStore.activeConversationId, (newId) => {
+  if (newId) {
+    selectedChatId.value = newId;
+    currentTab.value = 'messages';
+    if (route.hash !== '#chat') {
+      router.push({ hash: '#chat' });
+    }
+  } else {
+    selectedChatId.value = null;
+    if (route.hash === '#chat') {
+      router.back();
+    }
+  }
+});
+
+watch(() => route.hash, (newHash) => {
+  // 1. Đóng khung chat nếu mất hash #chat
+  if (newHash !== '#chat' && chatStore.activeConversationId) {
+    chatStore.activeConversationId = null;
+  }
+  
+  // 2. Chuyển tab dựa trên hash
+  const validTabs = ['contacts', 'notifications', 'profile', 'settings'];
+  const hashTab = newHash.replace('#', '');
+  
+  if (validTabs.includes(hashTab)) {
+    currentTab.value = hashTab;
+  } else if (!newHash || newHash === '#chat') {
+    currentTab.value = 'messages';
+  }
+});
 
 const handleSelectChat = (chatId) => {
   selectedChatId.value = chatId;
@@ -25,10 +60,17 @@ const handleSelectChat = (chatId) => {
 const handleBackToList = () => {
   selectedChatId.value = null;
   currentTab.value = 'messages';
+  if (route.hash) {
+    router.back();
+  }
 };
 
 const handleTabChange = (tabId) => {
   currentTab.value = tabId;
+  const targetHash = tabId === 'messages' ? '' : `#${tabId}`;
+  if (route.hash !== targetHash) {
+    router.push({ hash: targetHash });
+  }
 };
 
 onMounted(async () => {
@@ -40,7 +82,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden font-sans transition-colors duration-300"
+  <div class="flex h-full overflow-hidden font-sans transition-colors duration-300"
        style="background: var(--bg-primary); color: var(--text-primary);">
 
     <!-- ── Sidebar ── -->
