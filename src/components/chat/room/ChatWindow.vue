@@ -74,6 +74,23 @@ const shouldShowAvatar = (idx) => {
   if (idx === 0) return true;
   return msgs[idx].sender_id !== msgs[idx - 1].sender_id;
 };
+
+const isLastInSequence = (idx) => {
+  const msgs = chatStore.currentMessages;
+  if (idx === msgs.length - 1) return true;
+  
+  const currentMsg = msgs[idx];
+  const nextMsg = msgs[idx + 1];
+  
+  if (currentMsg.sender_id !== nextMsg.sender_id) return true;
+  
+  const currentTime = new Date(currentMsg.created_at).getTime();
+  const nextTime = new Date(nextMsg.created_at).getTime();
+  
+  if (nextTime - currentTime > 300000) return true; // > 5 minutes
+  
+  return false;
+};
 </script>
 
 <template>
@@ -147,11 +164,14 @@ const shouldShowAvatar = (idx) => {
       <TransitionGroup name="bubble" tag="div" class="space-y-1">
         <MessageBubble
           v-for="(msg, idx) in chatStore.currentMessages"
-          :key="msg.id"
+          :key="msg._id || msg.id"
           :msg="msg"
           :isMine="msg.sender_id === authStore.user?.id"
           :sender="getSender(msg.sender_id)"
           :showAvatar="shouldShowAvatar(idx)"
+          :participants="currentConversation?.participants || []"
+          :isGroup="currentConversation?.is_group || false"
+          :showTimeAndStatus="isLastInSequence(idx)"
         />
       </TransitionGroup>
         </div>

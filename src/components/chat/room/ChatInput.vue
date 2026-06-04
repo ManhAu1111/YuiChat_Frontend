@@ -130,11 +130,11 @@ const sendMessage = async () => {
   const isUploadingAny = selectedFiles.value.some(f => f.isUploading);
   if (isUploadingAny) return; // Wait until all are done or don't allow sending while uploading
 
-  isSending.value = true;
   errorMsg.value = '';
 
-  try {
-    if (hasFiles) {
+  if (hasFiles) {
+    isSending.value = true;
+    try {
       // Upload tất cả các file
       const uploadPromises = selectedFiles.value.map(fileObj => uploadFile(fileObj));
       const results = await Promise.all(uploadPromises);
@@ -155,43 +155,63 @@ const sendMessage = async () => {
       });
 
       messageText.value = '';
-      nextTick(() => {
-        const el = document.getElementById('chat-message-input');
-        if (el) el.style.height = 'auto';
-      });
       selectedFiles.value.forEach(f => {
         if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
       });
       selectedFiles.value = [];
-    } else {
-      // Chỉ gửi text
-      const content = messageText.value;
-      messageText.value = '';
-      nextTick(() => {
+      
+      // Delay focus restore after re-enabling
+      setTimeout(() => {
         const el = document.getElementById('chat-message-input');
-        if (el) el.style.height = 'auto';
-      });
-      await chatStore.sendMessage(props.conversationId, content);
+        if (el) {
+            el.style.height = 'auto';
+            const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+            if (!isMobile) el.focus();
+        }
+      }, 50);
+
+    } catch (err) {
+      errorMsg.value = 'Không thể gửi file. Thử lại sau!';
+      console.error(err);
+    } finally {
+      isSending.value = false;
     }
-  } catch (err) {
-    errorMsg.value = 'Không thể gửi. Thử lại sau!';
-    console.error(err);
-  } finally {
-    isSending.value = false;
+  } else {
+    // Chỉ gửi text (Optimistic UI, không block input)
+    const content = messageText.value;
+    messageText.value = '';
+    
+    nextTick(() => {
+      const el = document.getElementById('chat-message-input');
+      if (el) {
+          el.style.height = 'auto';
+          const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+          if (!isMobile) el.focus();
+      }
+    });
+
+    chatStore.sendMessage(props.conversationId, content).catch(err => {
+      errorMsg.value = 'Không thể gửi. Thử lại sau!';
+      console.error(err);
+    });
   }
 };
 
 // Xử lý sự kiện nhấn Enter
 const handleEnter = (event) => {
-  // Kiểm tra thiết bị: nếu màn hình nhỏ (mobile/tablet) hoặc có cảm ứng
   const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
   
   if (!isMobile) {
-    // Trên máy tính: Enter để gửi, ngăn chặn xuống dòng mặc định
+    // Trên máy tính:
+    if (event.shiftKey) {
+        // Shift + Enter: cho phép xuống dòng
+        return;
+    }
+    // Enter (không Shift): ngăn xuống dòng và gửi tin
     event.preventDefault();
     sendMessage();
   }
-  // Trên điện thoại: không gọi preventDefault() để textarea tự động thêm dòng mới
+  // Trên điện thoại: không gọi preventDefault() để textarea tự động thêm dòng mới khi nhấn Enter
 };
 </script>
 
@@ -279,7 +299,7 @@ const handleEnter = (event) => {
           <textarea
             id="chat-message-input"
             v-model="messageText"
-            @keydown.enter.exact="handleEnter"
+            @keydown.enter="handleEnter"
             @input="autoResize"
             :placeholder="selectedFiles.length > 0 ? `Đã chọn ${selectedFiles.length} tệp đính kèm...` : 'Nhập tin nhắn...'"
             class="w-full bg-transparent px-2 py-1.5 text-[15px] outline-none resize-none scrollbar-hide"
