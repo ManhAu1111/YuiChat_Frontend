@@ -25,9 +25,15 @@ export const useChatStore = defineStore('chat', {
 
             // 1. Thêm vào cache nếu có (tự động cập nhật currentMessages nếu đang xem phòng này)
             if (this.messagesCache[conversationId]) {
-              const isMyMessage = this.messagesCache[conversationId].some(m => m.id === newMessage.id);
+              const isMyMessage = this.messagesCache[conversationId].some(m => (m._id || m.id) === (newMessage._id || newMessage.id));
               if (!isMyMessage) {
                 this.messagesCache[conversationId].push(newMessage);
+                
+                // Gửi thông báo Đã Nhận (Deliver)
+                if (window.Echo) {
+                  api.post(`/conversations/${conversationId}/deliver`, { message_id: newMessage._id || newMessage.id })
+                    .catch(err => console.error('Lỗi báo đã nhận:', err));
+                }
               }
             }
 
@@ -79,7 +85,7 @@ export const useChatStore = defineStore('chat', {
                      contentDisplay = 'Đã gửi tệp đính kèm';
                   }
                   notificationStore.showToast({
-                    id: 'msg_' + newMessage.id,
+                    id: 'msg_' + (newMessage._id || newMessage.id),
                     type: 'NewMessageNoti',
                     data: {
                       is_group: isGroup,
@@ -97,6 +103,29 @@ export const useChatStore = defineStore('chat', {
               // Đưa lên đầu danh sách
               const [movedConv] = this.conversations.splice(convIndex, 1);
               this.conversations.unshift(movedConv);
+            }
+          })
+          .listen('MessageDelivered', (e) => {
+            const convIndex = this.conversations.findIndex(c => c.id === conversationId);
+            if (convIndex !== -1 && this.conversations[convIndex].participants) {
+                const p = this.conversations[convIndex].participants.find(p => p.user_id === e.user_id);
+                if (p) {
+                    if (!p.last_delivered_message_id || e.message_id > p.last_delivered_message_id) {
+                        p.last_delivered_message_id = e.message_id;
+                    }
+                }
+            }
+          })
+          .listen('MessageRead', (e) => {
+            const convIndex = this.conversations.findIndex(c => c.id === conversationId);
+            if (convIndex !== -1 && this.conversations[convIndex].participants) {
+                const p = this.conversations[convIndex].participants.find(p => p.user_id === e.user_id);
+                if (p) {
+                    if (!p.last_read_message_id || e.message_id > p.last_read_message_id) {
+                        p.last_read_message_id = e.message_id;
+                        p.last_delivered_message_id = e.message_id;
+                    }
+                }
             }
           });
       }
@@ -262,8 +291,14 @@ export const useChatStore = defineStore('chat', {
         this.messagesCache[conversationId] = fetchedMessages;
 
         // 4. HIỂN THỊ RA MÀN HÌNH
-        // (Lưu ý: Phải gán tham chiếu thẳng vào cache để sau này có tin mới nó tự update)
         this.currentMessages = this.messagesCache[conversationId];
+
+        // 5. Gửi trạng thái Đã Xem
+        if (fetchedMessages.length > 0) {
+            const latestMsg = fetchedMessages[fetchedMessages.length - 1];
+            api.post(`/conversations/${conversationId}/read`, { message_id: latestMsg._id || latestMsg.id })
+              .catch(err => console.error('Lỗi báo đã xem:', err));
+        }
 
       } catch (error) {
         console.error('Lỗi lấy tin nhắn:', error);
@@ -278,13 +313,14 @@ export const useChatStore = defineStore('chat', {
       // 1. TẠO TIN NHẮN ẢO (Fake Message)
       const tempId = 'temp_' + Date.now(); // Tạo ID tạm thời
       const tempMessage = {
-        id: tempId,
+        _id: tempId,
+        id: tempId, // keep id for fallback
         conversation_id: conversationId,
         sender_id: authStore.user?.id, // ID của chính bạn
         content: content,
         type: 'text',
         created_at: new Date().toISOString(), // Lấy giờ hiện tại trên máy
-        is_sending: true // Đánh dấu là đang gửi (để mờ mờ tí nếu thích)
+        status: 'sending'
       };
 
       // 2. NHÉT NGAY VÀO MÀN HÌNH (Giao diện lạc quan)
@@ -300,12 +336,13 @@ export const useChatStore = defineStore('chat', {
         });
 
         const realMessage = response.data;
+        realMessage.status = 'sent';
 
         // 4. TRÁO ĐỔI TIN NHẮN ẢO THÀNH TIN NHẮN THẬT
         if (this.activeConversationId === conversationId) {
-          const index = this.currentMessages.findIndex(m => m.id === tempId);
+          const index = this.currentMessages.findIndex(m => m._id === tempId || m.id === tempId);
           if (index !== -1) {
-            const realExists = this.currentMessages.some(m => m.id === realMessage.id);
+            const realExists = this.currentMessages.some(m => (m._id || m.id) === (realMessage._id || realMessage.id) && !String(m.id).startsWith('temp_'));
             if (realExists) {
               this.currentMessages.splice(index, 1); // Đã nhận qua Echo, xoá tin ảo
             } else {
@@ -329,9 +366,12 @@ export const useChatStore = defineStore('chat', {
       } catch (error) {
         console.error('Lỗi gửi tin nhắn:', error);
 
-        // NẾU LỖI: Thu hồi lại tin nhắn ảo trên màn hình
+        // NẾU LỖI: Cập nhật trạng thái thành failed
         if (this.activeConversationId === conversationId) {
-          this.currentMessages = this.currentMessages.filter(m => m.id !== tempId);
+          const index = this.currentMessages.findIndex(m => m._id === tempId || m.id === tempId);
+          if (index !== -1) {
+            this.currentMessages[index].status = 'failed';
+          }
         }
         throw error;
       }
@@ -347,6 +387,7 @@ export const useChatStore = defineStore('chat', {
         : { file_count: attachments.length };
         
       const tempMessage = {
+        _id: tempId,
         id: tempId,
         conversation_id: conversationId,
         sender_id: authStore.user?.id,
@@ -355,7 +396,7 @@ export const useChatStore = defineStore('chat', {
         metadata: metadata,
         attachments: attachments,
         created_at: new Date().toISOString(),
-        is_sending: true,
+        status: 'sending',
       };
 
       if (this.activeConversationId === conversationId) {
@@ -371,12 +412,13 @@ export const useChatStore = defineStore('chat', {
         });
 
         const realMessage = response.data;
+        realMessage.status = 'sent';
 
         // 3. Tráo tin nhắn ảo → tin nhắn thật
         if (this.activeConversationId === conversationId) {
-          const idx = this.currentMessages.findIndex(m => m.id === tempId);
+          const idx = this.currentMessages.findIndex(m => m._id === tempId || m.id === tempId);
           if (idx !== -1) {
-            const realExists = this.currentMessages.some(m => m.id === realMessage.id);
+            const realExists = this.currentMessages.some(m => (m._id || m.id) === (realMessage._id || realMessage.id) && !String(m.id).startsWith('temp_'));
             if (realExists) {
               this.currentMessages.splice(idx, 1);
             } else {
@@ -396,10 +438,10 @@ export const useChatStore = defineStore('chat', {
 
         return realMessage;
       } catch (error) {
-        // Rollback: xóa tin nhắn ảo
+        // Rollback: Đổi thành failed
         if (this.activeConversationId === conversationId) {
-          const idx = this.currentMessages.findIndex(m => m.id === tempId);
-          if (idx !== -1) this.currentMessages.splice(idx, 1);
+          const idx = this.currentMessages.findIndex(m => m._id === tempId || m.id === tempId);
+          if (idx !== -1) this.currentMessages[idx].status = 'failed';
         }
         console.error('Lỗi gửi file:', error);
         throw error;
