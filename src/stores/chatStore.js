@@ -13,7 +13,45 @@ export const useChatStore = defineStore('chat', {
     isSearching: false,
     isLoadingMessages: false,
     subscribedChannels: [],
+    isSelectionMode: false,
+    selectedMessageIds: [],
+    typingUsers: {},
   }),
+
+  getters: {
+    validSequenceMessageIds(state) {
+      if (state.selectedMessageIds.length === 0) return null; // null means all are valid
+      
+      const firstSelectedId = String(state.selectedMessageIds[0]);
+      const firstIdx = state.currentMessages.findIndex(m => String(m._id || m.id) === firstSelectedId);
+      if (firstIdx === -1) return [];
+
+      const validIds = [];
+      validIds.push(firstSelectedId);
+
+      // Scan backwards
+      for (let i = firstIdx - 1; i >= 0; i--) {
+        const curr = state.currentMessages[i];
+        const next = state.currentMessages[i + 1];
+        if (String(curr.sender_id) !== String(next.sender_id) || (new Date(next.created_at).getTime() - new Date(curr.created_at).getTime() > 300000)) {
+          break; // sequence broken
+        }
+        validIds.push(String(curr._id || curr.id));
+      }
+
+      // Scan forwards
+      for (let i = firstIdx + 1; i < state.currentMessages.length; i++) {
+        const curr = state.currentMessages[i];
+        const prev = state.currentMessages[i - 1];
+        if (String(curr.sender_id) !== String(prev.sender_id) || (new Date(curr.created_at).getTime() - new Date(prev.created_at).getTime() > 300000)) {
+          break; // sequence broken
+        }
+        validIds.push(String(curr._id || curr.id));
+      }
+
+      return validIds;
+    }
+  },
 
   actions: {
     listenForMessages(conversationId) {
@@ -127,7 +165,55 @@ export const useChatStore = defineStore('chat', {
                     }
                 }
             }
+          })
+          .listenForWhisper('typing', (e) => {
+            this.setTypingState(conversationId, e.user, e.typing);
           });
+      }
+    },
+    
+    setTypingState(conversationId, user, isTyping) {
+      if (!this.typingUsers[conversationId]) {
+        this.typingUsers[conversationId] = [];
+      }
+      
+      const users = this.typingUsers[conversationId];
+      const index = users.findIndex(u => u.id === user.id);
+      
+      if (isTyping) {
+        if (index === -1) {
+          const timeoutId = setTimeout(() => {
+            this.setTypingState(conversationId, user, false);
+          }, 3000);
+          users.push({ ...user, timeoutId });
+        } else {
+          clearTimeout(users[index].timeoutId);
+          users[index].timeoutId = setTimeout(() => {
+            this.setTypingState(conversationId, user, false);
+          }, 3000);
+        }
+      } else {
+        if (index !== -1) {
+          clearTimeout(users[index].timeoutId);
+          users.splice(index, 1);
+        }
+      }
+    },
+
+    broadcastTyping(conversationId, isTyping = true) {
+      const authStore = useAuthStore();
+      if (!window.Echo || !authStore.user) return;
+      
+      const channel = window.Echo.private(`chat.${conversationId}`);
+      if (channel) {
+        channel.whisper('typing', {
+          user: {
+            id: authStore.user.id,
+            name: authStore.user.name,
+            avatar: authStore.user.avatar
+          },
+          typing: isTyping
+        });
       }
     },
 
@@ -444,6 +530,68 @@ export const useChatStore = defineStore('chat', {
           if (idx !== -1) this.currentMessages[idx].status = 'failed';
         }
         console.error('Lỗi gửi file:', error);
+        throw error;
+      }
+    },
+
+    toggleSelectionMode(value) {
+      if (value !== undefined) {
+        this.isSelectionMode = value;
+      } else {
+        this.isSelectionMode = !this.isSelectionMode;
+      }
+      if (!this.isSelectionMode) {
+        this.selectedMessageIds = [];
+      }
+    },
+
+    toggleMessageSelection(messageId) {
+      const index = this.selectedMessageIds.indexOf(messageId);
+      if (index !== -1) {
+        this.selectedMessageIds.splice(index, 1);
+        return;
+      }
+
+      // Only allow selection if validSequenceMessageIds allows it
+      if (this.validSequenceMessageIds === null || this.validSequenceMessageIds.includes(String(messageId))) {
+        this.selectedMessageIds.push(messageId);
+      }
+    },
+
+    async forwardMessages(payload) {
+      try {
+        const response = await api.post('/messages/forward', payload);
+        
+        // After successfully forwarding, exit selection mode
+        this.toggleSelectionMode(false);
+        
+        // Cập nhật optimistic UI cho người gửi
+        if (response.data && response.data.messages) {
+          const newMessages = response.data.messages;
+          newMessages.forEach(msg => {
+            // Cập nhật cache nếu đã có
+            if (this.messagesCache[msg.conversation_id]) {
+              const cacheExists = this.messagesCache[msg.conversation_id].some(m => (m._id || m.id) === (msg._id || msg.id));
+              if (!cacheExists) {
+                this.messagesCache[msg.conversation_id].push(msg);
+              }
+            }
+
+            // Nếu tin nhắn được forward vào phòng đang mở
+            if (this.activeConversationId === msg.conversation_id) {
+              const realExists = this.currentMessages.some(m => (m._id || m.id) === (msg._id || msg.id));
+              if (!realExists) {
+                this.currentMessages.push(msg);
+              }
+            }
+          });
+        }
+        
+        await this.fetchConversations();
+        
+        return response.data;
+      } catch (error) {
+        console.error('Lỗi chuyển tiếp tin nhắn:', error);
         throw error;
       }
     }

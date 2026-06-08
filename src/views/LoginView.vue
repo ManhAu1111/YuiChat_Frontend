@@ -8,26 +8,43 @@ const router = useRouter();
 
 const email = ref('');
 const password = ref('');
+const name = ref('');
+const username = ref('');
 const errorMessage = ref('');
 const isLoading = ref(false);
 const showPassword = ref(false);
+const isRegisterMode = ref(false);
 
-const handleLogin = async () => {
-  if (!email.value || !password.value) {
-    errorMessage.value = 'Vui lòng nhập đầy đủ email và mật khẩu.';
+const handleAuth = async () => {
+  if (!email.value || !password.value || (isRegisterMode.value && (!name.value || !username.value))) {
+    errorMessage.value = 'Vui lòng nhập đầy đủ thông tin.';
     return;
   }
   isLoading.value = true;
   errorMessage.value = '';
   try {
-    await authStore.login({ email: email.value, password: password.value });
+    if (isRegisterMode.value) {
+      await authStore.register({
+        name: name.value,
+        username: username.value,
+        email: email.value,
+        password: password.value
+      });
+    } else {
+      await authStore.login({ email: email.value, password: password.value });
+    }
     router.push({ name: 'chat' });
   } catch (error) {
-    console.error('Lỗi đăng nhập:', error);
-    errorMessage.value = error.response?.data?.message || 'Email hoặc mật khẩu không chính xác.';
+    console.error(`Lỗi ${isRegisterMode.value ? 'đăng ký' : 'đăng nhập'}:`, error);
+    errorMessage.value = error.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
   } finally {
     isLoading.value = false;
   }
+};
+
+const toggleMode = () => {
+  isRegisterMode.value = !isRegisterMode.value;
+  errorMessage.value = '';
 };
 
 const handleLoginSuccess = async (response) => {
@@ -63,24 +80,65 @@ const handleLoginSuccess = async (response) => {
           </svg>
         </div>
         <!-- Apple Display typography: 34px, weight 600, tight -->
-        <h1 class="font-display text-white font-semibold mb-2"
+        <h1 class="font-display text-white font-semibold mb-2 transition-all duration-300"
             style="font-size: 34px; line-height: 1.1; letter-spacing: -0.28px;">
-          YuiChat
+          {{ isRegisterMode ? 'Đăng ký' : 'YuiChat' }}
         </h1>
-        <p class="text-sm font-light" style="color: rgba(255,255,255,0.48); letter-spacing: -0.224px;">
-          Đăng nhập để bắt đầu trò chuyện
+        <p class="text-sm font-light transition-all duration-300" style="color: rgba(255,255,255,0.48); letter-spacing: -0.224px;">
+          {{ isRegisterMode ? 'Tạo tài khoản mới để tham gia YuiChat' : 'Đăng nhập để bắt đầu trò chuyện' }}
         </p>
       </div>
 
       <!-- Form -->
-      <form id="login-form" @submit.prevent="handleLogin" class="space-y-4">
+      <form id="login-form" @submit.prevent="handleAuth" class="space-y-4">
 
         <!-- Error banner -->
-        <div v-if="errorMessage"
-             class="px-4 py-3 rounded-[10px] animate-slide-down"
-             style="background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.25);">
-          <p class="text-sm" style="color: #ff453a; letter-spacing: -0.224px;">{{ errorMessage }}</p>
-        </div>
+        <transition name="fade">
+          <div v-if="errorMessage"
+               class="px-4 py-3 rounded-[10px]"
+               style="background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.25);">
+            <p class="text-sm" style="color: #ff453a; letter-spacing: -0.224px;">{{ errorMessage }}</p>
+          </div>
+        </transition>
+
+        <!-- Dynamic Fields for Registration -->
+        <transition name="slide-fade">
+          <div v-if="isRegisterMode" class="space-y-4 mb-4">
+            <!-- Name field -->
+            <div class="space-y-1.5">
+              <label for="name-input" class="block text-sm font-medium"
+                     style="color: rgba(255,255,255,0.7); letter-spacing: -0.224px;">
+                Tên hiển thị
+              </label>
+              <input
+                id="name-input"
+                v-model="name"
+                type="text"
+                autocomplete="name"
+                :required="isRegisterMode"
+                placeholder="Nguyễn Văn A"
+                class="apple-input w-full"
+              />
+            </div>
+
+            <!-- Username field -->
+            <div class="space-y-1.5">
+              <label for="username-input" class="block text-sm font-medium"
+                     style="color: rgba(255,255,255,0.7); letter-spacing: -0.224px;">
+                Tên đăng nhập
+              </label>
+              <input
+                id="username-input"
+                v-model="username"
+                type="text"
+                autocomplete="username"
+                :required="isRegisterMode"
+                placeholder="nguyenvana"
+                class="apple-input w-full"
+              />
+            </div>
+          </div>
+        </transition>
 
         <!-- Email field -->
         <div class="space-y-1.5">
@@ -159,7 +217,15 @@ const handleLoginSuccess = async (response) => {
               </svg>
               Đang kiểm tra...
             </span>
-            <span v-else>Đăng nhập</span>
+            <span v-else>{{ isRegisterMode ? 'Đăng ký ngay' : 'Đăng nhập' }}</span>
+          </button>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="text-center pt-2 pb-1">
+          <button type="button" @click="toggleMode" class="text-sm font-medium transition-opacity hover:opacity-80"
+                  style="color: #2997ff; letter-spacing: -0.224px;">
+            {{ isRegisterMode ? 'Đã có tài khoản? Đăng nhập' : 'Chưa có tài khoản? Đăng ký ngay' }}
           </button>
         </div>
 
@@ -185,3 +251,38 @@ const handleLoginSuccess = async (response) => {
     </footer>
   </div>
 </template>
+
+<style scoped>
+/* Vue Transitions */
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.slide-fade-enter-to,
+.slide-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 200px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+</style>

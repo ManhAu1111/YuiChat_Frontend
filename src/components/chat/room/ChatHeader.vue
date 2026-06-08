@@ -1,5 +1,8 @@
 <script setup>
 import { useThemeStore } from '../../../stores/themeStore';
+import { getFileUrl } from '../../../services/api';
+import UserAvatar from '../ui/UserAvatar.vue';
+import GroupAvatar from '../ui/GroupAvatar.vue';
 
 const props = defineProps(['chatId', 'user']);
 const emit = defineEmits(['back', 'open-info']);
@@ -44,17 +47,8 @@ const formatOfflineTime = (dateStr) => {
       </button>
 
       <!-- Avatar -->
-      <div class="relative flex-shrink-0">
-        <img
-          :src="user?.avatar || 'https://ui-avatars.com/api/?name=' + (user?.name || 'User') + '&background=random'"
-          alt="Avatar"
-          class="w-10 h-10 rounded-full object-cover transition-colors duration-300"
-          style="background: var(--hover-bg);"
-        />
-        <div v-if="user?.is_online"
-             class="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full border-[1.5px] transition-colors duration-300"
-             style="background: #32d74b; border-color: var(--glass-bg);"></div>
-      </div>
+      <GroupAvatar v-if="user?.is_group" :chat="user" sizeClass="w-10 h-10" />
+      <UserAvatar v-else :user="user" sizeClass="w-10 h-10" />
 
       <!-- Name + status -->
       <div class="flex flex-col justify-center">

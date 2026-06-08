@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useAuthStore } from '../../../stores/auth';
 import { useChatStore } from '../../../stores/chatStore';
 import { useThemeStore } from '../../../stores/themeStore';
+import { getFileUrl } from '../../../services/api';
 
 const props = defineProps(['conversation']);
 const emit = defineEmits(['close']);
@@ -120,7 +121,7 @@ const handleUpdateGroup = async () => {
         <div v-if="!isEditing" class="flex flex-col items-center w-full">
           <div class="relative mb-3">
             <img 
-              :src="conversation.avatar || `https://ui-avatars.com/api/?name=${conversation.name}&background=random`" 
+              :src="conversation.avatar ? getFileUrl(conversation.avatar) : `https://ui-avatars.com/api/?name=${conversation.name}&background=random`" 
               class="w-20 h-20 rounded-full object-cover shadow-sm"
             />
           </div>
@@ -138,7 +139,7 @@ const handleUpdateGroup = async () => {
         <div v-else class="flex flex-col items-center w-full">
           <div class="relative mb-4 cursor-pointer group" @click="triggerFileInput">
             <img 
-              :src="avatarPreview || conversation.avatar || `https://ui-avatars.com/api/?name=${conversation.name}&background=random`" 
+              :src="avatarPreview || (conversation.avatar ? getFileUrl(conversation.avatar) : `https://ui-avatars.com/api/?name=${conversation.name}&background=random`)" 
               class="w-20 h-20 rounded-full object-cover shadow-sm transition-opacity group-hover:opacity-70"
             />
             <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
@@ -179,7 +180,7 @@ const handleUpdateGroup = async () => {
           >
             <div class="flex items-center gap-3 min-w-0">
               <img 
-                :src="participant.user.avatar || `https://ui-avatars.com/api/?name=${participant.user.name}&background=random`" 
+                :src="participant.user.avatar ? getFileUrl(participant.user.avatar) : `https://ui-avatars.com/api/?name=${participant.user.name}&background=random`" 
                 class="w-9 h-9 rounded-full object-cover flex-shrink-0"
               />
               <div class="min-w-0">

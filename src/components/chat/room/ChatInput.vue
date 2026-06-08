@@ -15,6 +15,25 @@ const fileInputRef = ref(null);
 const imageInputRef = ref(null);
 const errorMsg = ref('');
 
+let typingTimeout = null;
+
+const handleInput = (event) => {
+  autoResize(event);
+  
+  if (!typingTimeout && messageText.value.trim().length > 0) {
+    chatStore.broadcastTyping(props.conversationId, true);
+    typingTimeout = setTimeout(() => {
+      typingTimeout = null;
+    }, 2000);
+  } else if (messageText.value.trim().length === 0) {
+    chatStore.broadcastTyping(props.conversationId, false);
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+  }
+};
+
 const autoResize = (event) => {
   const el = event.target || event;
   if (!el) return;
@@ -155,6 +174,12 @@ const sendMessage = async () => {
       });
 
       messageText.value = '';
+      chatStore.broadcastTyping(props.conversationId, false);
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
+      }
+      
       selectedFiles.value.forEach(f => {
         if (f.previewUrl) URL.revokeObjectURL(f.previewUrl);
       });
@@ -180,6 +205,11 @@ const sendMessage = async () => {
     // Chỉ gửi text (Optimistic UI, không block input)
     const content = messageText.value;
     messageText.value = '';
+    chatStore.broadcastTyping(props.conversationId, false);
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
     
     nextTick(() => {
       const el = document.getElementById('chat-message-input');
@@ -300,7 +330,7 @@ const handleEnter = (event) => {
             id="chat-message-input"
             v-model="messageText"
             @keydown.enter="handleEnter"
-            @input="autoResize"
+            @input="handleInput"
             :placeholder="selectedFiles.length > 0 ? `Đã chọn ${selectedFiles.length} tệp đính kèm...` : 'Nhập tin nhắn...'"
             class="w-full bg-transparent px-2 py-1.5 text-[15px] outline-none resize-none scrollbar-hide"
             rows="1"

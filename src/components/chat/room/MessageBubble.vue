@@ -4,6 +4,34 @@ import { useAuthStore } from '../../../stores/auth';
 import { useChatStore } from '../../../stores/chatStore';
 import FileCard from '../media/FileCard.vue';
 import ImageLightbox from '../media/ImageLightbox.vue';
+import MessageStatusIcon from './MessageStatusIcon.vue';
+import ReadReceipts from './ReadReceipts.vue';
+import { getFileUrl } from '../../../services/api';
+
+const isMenuOpen = ref(false);
+
+const handleForward = () => {
+  chatStore.toggleSelectionMode(true);
+  chatStore.toggleMessageSelection(props.msg._id || props.msg.id);
+};
+
+const isSelectable = computed(() => {
+  if (!chatStore.isSelectionMode) return false;
+  if (!chatStore.validSequenceMessageIds) return true;
+  return chatStore.validSequenceMessageIds.includes(String(props.msg._id || props.msg.id));
+});
+
+const handleBubbleClick = () => {
+  if (chatStore.isSelectionMode) {
+    if (isSelectable.value) {
+      chatStore.toggleMessageSelection(props.msg._id || props.msg.id);
+    }
+  }
+};
+
+const isSelected = computed(() => {
+  return chatStore.selectedMessageIds.includes(props.msg._id || props.msg.id);
+});
 
 const props = defineProps({
   msg: { type: Object, required: true },
@@ -17,9 +45,11 @@ const props = defineProps({
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
-const lightboxSrc = ref(null);
+const emit = defineEmits(['forward-attachment']);
 
 const attachments = computed(() => props.msg.attachments || []);
+
+const activeAttachment = ref(null);
 
 const isImage = computed(() =>
   props.msg.type === 'image' ||
@@ -41,14 +71,6 @@ const avatarUrl = computed(() => {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=56`;
 });
 
-const getFileUrl = (url) => {
-  if (!url) return '';
-  if (url.includes('/storage/')) {
-    const path = url.substring(url.indexOf('/storage/'));
-    return `http://${window.location.hostname}:8000${path}`;
-  }
-  return url;
-};
 
 const getGridClass = (index, total) => {
   if (total === 1) return 'col-span-6';
@@ -84,46 +106,44 @@ const messageStatus = computed(() => {
   return 'sent'; // groups use mini avatars
 });
 
-const groupReadReceipts = computed(() => {
-    if (!props.isMine || !props.isGroup) return [];
-    const msgId = props.msg._id || props.msg.id;
-    if (!msgId || String(msgId).startsWith('temp_')) return [];
-    
-    const msgs = chatStore.currentMessages;
-    const currentIndex = msgs.findIndex(m => (m._id || m.id) === msgId);
-    
-    const readers = props.participants.filter(p => {
-        if (p.user_id === authStore.user?.id || !p.last_read_message_id) return false;
-        if (msgId > p.last_read_message_id) return false;
-        
-        if (currentIndex !== -1) {
-            for (let i = currentIndex + 1; i < msgs.length; i++) {
-                const m = msgs[i];
-                const mId = m._id || m.id;
-                if (m.sender_id === authStore.user?.id && mId <= p.last_read_message_id) {
-                    return false; 
-                }
-            }
-        }
-        return true;
-    });
-    
-    return readers.map(r => r.user).filter(u => u);
-});
 </script>
 
 <template>
-  <div class="flex items-end gap-2" :class="isMine ? 'justify-end' : 'justify-start'">
+  <div class="flex items-end gap-2 relative group" :class="[
+      isMine ? 'justify-end' : 'justify-start',
+      chatStore.isSelectionMode ? 'cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-1 rounded-xl transition-colors' : ''
+    ]"
+    @click="handleBubbleClick"
+    :style="chatStore.isSelectionMode && !isSelectable ? 'opacity: 0.5; pointer-events: none;' : ''"
+  >
+    
+    <!-- Selection Checkbox -->
+    <div v-if="chatStore.isSelectionMode" class="flex-shrink-0 mr-1" :class="isMine ? 'order-first' : ''">
+      <div class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors"
+           :class="[
+             isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400 dark:border-gray-500',
+             !isSelectable ? 'opacity-30' : ''
+           ]">
+        <svg v-if="isSelected" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      </div>
+    </div>
+
 
     <!-- Avatar phía nhận -->
-    <div v-if="!isMine" class="w-8 flex-shrink-0 flex justify-center mb-0.5">
+    <div v-if="!isMine" class="w-8 flex-shrink-0 flex justify-center mb-0.5" :class="chatStore.isSelectionMode ? 'ml-2' : ''">
       <img v-if="showAvatar" :src="avatarUrl" class="w-8 h-8 rounded-full object-cover transition-colors duration-300" style="background: var(--hover-bg);" :alt="sender?.name" />
       <div v-else class="w-8 h-8"></div>
     </div>
 
     <!-- Wrapper cho Bubble và Mini Avatars -->
-    <div class="flex flex-col gap-1 max-w-[75%]" :class="isMine ? 'items-end' : 'items-start'">
+    <div class="flex flex-col gap-1 max-w-[75%]" :class="[isMine ? 'items-end' : 'items-start', chatStore.isSelectionMode && isMine ? 'mr-2' : '']">
       
+      <!-- Forwarded Indicator -->
+      <div v-if="msg.metadata?.is_forwarded" class="flex items-center gap-1 text-[11px] opacity-70 mb-[-2px] px-1 font-medium" :class="isMine ? 'text-blue-500 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400'">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        <span>tin nhắn chuyển tiếp</span>
+      </div>
+
       <!-- Bubble chứa nội dung -->
       <div
         class="relative overflow-hidden"
@@ -141,13 +161,7 @@ const groupReadReceipts = computed(() => {
             <span class="text-[10px] opacity-60 font-medium" style="letter-spacing:0;">{{ formatTime(msg.created_at) }}</span>
             <template v-if="isMine && !isGroup">
                 <!-- Status Icons for 1on1 -->
-                <svg v-if="messageStatus === 'sending'" class="w-3 h-3 text-white/70 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <svg v-else-if="messageStatus === 'sent'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <svg v-else-if="messageStatus === 'delivered'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
-                <svg v-else-if="messageStatus === 'read'" class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
+                <MessageStatusIcon :status="messageStatus" />
             </template>
           </div>
         </div>
@@ -169,7 +183,7 @@ const groupReadReceipts = computed(() => {
                 maxHeight: attachments.length === 1 ? '350px' : '200px',
                 aspectRatio: attachments.length === 1 ? 'auto' : '1'
               }"
-              @click="lightboxSrc = getFileUrl(att.file_url)"
+              @click="activeAttachment = att"
               loading="lazy"
             />
           </div>
@@ -186,13 +200,7 @@ const groupReadReceipts = computed(() => {
             <div v-if="showTimeAndStatus" class="flex justify-end mt-1 items-center gap-1">
               <span class="text-[10px] opacity-60 font-medium" style="letter-spacing:0;">{{ formatTime(msg.created_at) }}</span>
               <template v-if="isMine && !isGroup">
-                  <svg v-if="messageStatus === 'sending'" class="w-3 h-3 text-white/70 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <svg v-else-if="messageStatus === 'sent'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                  <svg v-else-if="messageStatus === 'delivered'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
-                  <svg v-else-if="messageStatus === 'read'" class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
+                  <MessageStatusIcon :status="messageStatus" />
               </template>
             </div>
           </div>
@@ -203,16 +211,13 @@ const groupReadReceipts = computed(() => {
       <template v-else-if="isFile">
         <div class="px-4 py-2.5 text-[15px]">
           <div class="flex flex-col gap-2">
-            <FileCard v-for="(att, idx) in attachments" :key="att.id || idx" :attachment="att" />
+            <FileCard v-for="(att, idx) in attachments" :key="att.id || idx" :attachment="att" @forward="$emit('forward-attachment', att)" />
           </div>
           <p v-if="msg.content" class="mt-2 text-[14px] whitespace-pre-wrap break-words">{{ msg.content }}</p>
           <div v-if="showTimeAndStatus" class="flex justify-end mt-1.5 items-center gap-1">
             <span class="text-[10px] opacity-60 font-medium" style="letter-spacing:0;">{{ formatTime(msg.created_at) }}</span>
             <template v-if="isMine && !isGroup">
-                  <svg v-if="messageStatus === 'sending'" class="w-3 h-3 text-white/70 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  <svg v-else-if="messageStatus === 'sent'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                  <svg v-else-if="messageStatus === 'delivered'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
-                  <svg v-else-if="messageStatus === 'read'" class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
+                  <MessageStatusIcon :status="messageStatus" />
             </template>
           </div>
         </div>
@@ -225,34 +230,35 @@ const groupReadReceipts = computed(() => {
           <div v-if="showTimeAndStatus" class="flex justify-end mt-1 items-center gap-1">
             <span class="text-[10px] opacity-60 font-medium" style="letter-spacing:0;">{{ formatTime(msg.created_at) }}</span>
             <template v-if="isMine && !isGroup">
-                  <svg v-if="messageStatus === 'sending'" class="w-3 h-3 text-white/70 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                  <svg v-else-if="messageStatus === 'sent'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                  <svg v-else-if="messageStatus === 'delivered'" class="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
-                  <svg v-else-if="messageStatus === 'read'" class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M5 13l4 4L19 7" style="transform: translateX(4px)"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" style="transform: translateX(-4px)"></path></svg>
+                  <MessageStatusIcon :status="messageStatus" />
             </template>
           </div>
         </div>
       </template>
     </div>
 
-    <!-- Mini avatars for group read receipts (chuyển xuống dưới Bubble) -->
-    <div v-if="isMine && isGroup && groupReadReceipts.length > 0" class="flex flex-wrap justify-end gap-1 w-full mt-0.5 pr-1">
-      <img
-        v-for="user in groupReadReceipts"
-        :key="user.id"
-        :src="user.avatar ? getFileUrl(user.avatar) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random&size=32`"
-        :title="user.name"
-        class="w-[14px] h-[14px] rounded-full object-cover shadow-sm border border-white"
-        alt="Seen by"
-      />
-    </div>
+    <!-- Mini avatars for read receipts (chuyển xuống dưới Bubble) -->
+    <ReadReceipts 
+      :msg="msg"
+      :isMine="isMine"
+      :participants="participants"
+    />
   </div>
+  
+    <!-- Quick Forward Button (Hover) -->
+    <div v-if="!chatStore.isSelectionMode" class="opacity-0 group-hover:opacity-100 transition-opacity self-center flex-shrink-0"
+         :class="isMine ? 'order-first mr-1' : 'ml-1'">
+      <button @click.stop="handleForward" class="p-1.5 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors" title="Chuyển tiếp">
+        <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+      </button>
+    </div>
 
     <!-- Lightbox xem ảnh -->
     <ImageLightbox
-      v-if="lightboxSrc"
-      :src="lightboxSrc"
-      @close="lightboxSrc = null"
+      v-if="activeAttachment"
+      :attachment="activeAttachment"
+      @close="activeAttachment = null"
+      @forward="$emit('forward-attachment', activeAttachment); activeAttachment = null;"
     />
   </div>
 </template>

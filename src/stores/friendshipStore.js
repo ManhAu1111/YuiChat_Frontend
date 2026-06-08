@@ -153,6 +153,11 @@ export const useFriendshipStore = defineStore('friendship', {
       this._persist();
       try {
         await api.post('/friendships/accept', { friend_id: friendId });
+        
+        // Fetch conversations to show the newly created chat at the top
+        import('./chatStore').then(({ useChatStore }) => {
+          useChatStore().fetchConversations();
+        });
       } catch (err) {
         // Roll back
         this.friendshipStates.accepted = this.friendshipStates.accepted.filter(v => v !== id);
@@ -232,6 +237,11 @@ export const useFriendshipStore = defineStore('friendship', {
           this.friendshipStates.accepted.push(senderId);
         }
         this._persist();
+
+        // Fetch conversations to show the newly created chat at the top
+        import('./chatStore').then(({ useChatStore }) => {
+          useChatStore().fetchConversations();
+        });
       }
 
       // ── Receiver declined our sent request / sender cancelled request ──

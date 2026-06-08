@@ -10,6 +10,13 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  /**
+   * If true, buttons will only show icons without text to save horizontal space.
+   */
+  iconOnly: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const friendshipStore = useFriendshipStore();
@@ -87,48 +94,60 @@ async function handleUnfriend() {
   <!-- ── ACCEPTED ── -->
   <div v-if="status === 'accepted'" class="fb-group">
     <!-- "Friends" pill — static, secondary style -->
-    <button class="fb-btn fb-btn--secondary" disabled aria-label="Bạn bè">
+    <button :class="['fb-btn fb-btn--secondary', { 'fb-btn--icon-only': iconOnly }]" disabled aria-label="Bạn bè" title="Bạn bè">
       <svg class="fb-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
       </svg>
-      Bạn bè
+      <span v-if="!iconOnly">Bạn bè</span>
     </button>
-
-    <!-- "Unfriend" pill — destructive, ghost style -->
+    
+    <!-- "Unfriend" — ghost danger -->
     <button
-      class="fb-btn fb-btn--ghost fb-btn--danger"
+      :class="['fb-btn fb-btn--ghost fb-btn--danger', { 'fb-btn--icon-only': iconOnly }]"
       :disabled="loadingAction !== null"
       :aria-busy="loadingAction === 'unfriend'"
       @click="handleUnfriend"
       aria-label="Hủy kết bạn"
+      title="Hủy kết bạn"
     >
       <span v-if="loadingAction === 'unfriend'" class="fb-spinner" aria-hidden="true" />
-      <span v-else>Hủy kết bạn</span>
+      <template v-else>
+        <svg v-if="iconOnly" class="fb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+        <span v-if="!iconOnly">Hủy kết bạn</span>
+      </template>
     </button>
   </div>
 
   <!-- ── PENDING SENT ── -->
   <div v-else-if="status === 'pending_sent'" class="fb-group">
     <!-- "Requested" pill — disabled primary look -->
-    <button class="fb-btn fb-btn--requested" disabled aria-label="Đã gửi lời mời">
+    <button :class="['fb-btn fb-btn--requested', { 'fb-btn--icon-only': iconOnly }]" disabled aria-label="Đã gửi lời mời" title="Đã gửi lời mời">
       <svg class="fb-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
               clip-rule="evenodd"/>
       </svg>
-      Đã gửi lời mời
+      <span v-if="!iconOnly">Đã gửi lời mời</span>
     </button>
 
     <!-- "Cancel request" — ghost -->
     <button
-      class="fb-btn fb-btn--ghost"
+      :class="['fb-btn fb-btn--ghost fb-btn--danger', { 'fb-btn--icon-only': iconOnly }]"
       :disabled="loadingAction !== null"
       :aria-busy="loadingAction === 'cancel'"
       @click="handleCancel"
       aria-label="Hủy lời mời"
+      title="Hủy lời mời"
     >
       <span v-if="loadingAction === 'cancel'" class="fb-spinner" aria-hidden="true" />
-      <span v-else>Hủy lời mời</span>
+      <template v-else>
+        <svg v-if="iconOnly" class="fb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+        <span v-if="!iconOnly">Hủy lời mời</span>
+      </template>
     </button>
   </div>
 
@@ -136,44 +155,57 @@ async function handleUnfriend() {
   <div v-else-if="status === 'pending_received'" class="fb-group">
     <!-- Accept — primary blue -->
     <button
-      class="fb-btn fb-btn--primary"
+      :class="['fb-btn fb-btn--primary', { 'fb-btn--icon-only': iconOnly }]"
       :disabled="loadingAction !== null"
       :aria-busy="loadingAction === 'accept'"
       @click="handleAccept"
       aria-label="Chấp nhận lời mời kết bạn"
+      title="Chấp nhận"
     >
       <span v-if="loadingAction === 'accept'" class="fb-spinner fb-spinner--light" aria-hidden="true" />
-      <span v-else>Chấp nhận</span>
+      <template v-else>
+        <svg v-if="iconOnly" class="fb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 13l4 4L19 7"/>
+        </svg>
+        <span v-if="!iconOnly">Chấp nhận</span>
+      </template>
     </button>
 
     <!-- Decline — ghost -->
     <button
-      class="fb-btn fb-btn--ghost"
+      :class="['fb-btn fb-btn--ghost fb-btn--danger', { 'fb-btn--icon-only': iconOnly }]"
       :disabled="loadingAction !== null"
       :aria-busy="loadingAction === 'decline'"
       @click="handleDecline"
       aria-label="Từ chối lời mời kết bạn"
+      title="Từ chối"
     >
       <span v-if="loadingAction === 'decline'" class="fb-spinner" aria-hidden="true" />
-      <span v-else>Từ chối</span>
+      <template v-else>
+        <svg v-if="iconOnly" class="fb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+        <span v-if="!iconOnly">Từ chối</span>
+      </template>
     </button>
   </div>
 
   <!-- ── NO RELATIONSHIP ── -->
   <div v-else class="fb-group">
     <button
-      class="fb-btn fb-btn--primary"
+      :class="['fb-btn fb-btn--primary', { 'fb-btn--icon-only': iconOnly }]"
       :disabled="loadingAction !== null"
       :aria-busy="loadingAction === 'add'"
       @click="handleAddFriend"
       aria-label="Thêm bạn bè"
+      title="Thêm bạn bè"
     >
       <span v-if="loadingAction === 'add'" class="fb-spinner fb-spinner--light" aria-hidden="true" />
       <template v-else>
         <svg class="fb-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
         </svg>
-        Thêm bạn
+        <span v-if="!iconOnly">Thêm bạn</span>
       </template>
     </button>
   </div>
@@ -217,6 +249,15 @@ async function handleUnfriend() {
   outline: none;
   position: relative;
   overflow: hidden; /* clip the spinner */
+}
+
+/* Modifier for icon-only circular buttons */
+.fb-btn--icon-only {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  justify-content: center;
 }
 
 .fb-btn:focus-visible {

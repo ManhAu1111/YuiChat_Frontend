@@ -31,6 +31,17 @@ export const useAuthStore = defineStore('auth', {
         this.clearAuth();
       }
     },
+    async updateProfile(profileData) {
+      if (!this.token) return;
+      try {
+        const response = await api.put('/profile', profileData);
+        this.user = response.data;
+        return response.data;
+      } catch (error) {
+        console.error("Lỗi cập nhật hồ sơ:", error);
+        throw error;
+      }
+    },
     async login(credentials) {
       const response = await api.post('/login', credentials);
       this.token = response.data.access_token;
@@ -44,6 +55,21 @@ export const useAuthStore = defineStore('auth', {
         await ns.fetchUnreadCount();
         // Only notificationStore subscribes to the Echo channel;
         // it dispatches friendship events internally.
+        ns.listenForRealTimeUpdates(this.user?.id);
+        this.startHeartbeat();
+      } catch { /* non-critical */ }
+    },
+    async register(userData) {
+      const response = await api.post('/register', userData);
+      this.token = response.data.access_token;
+      this.user = response.data.user;
+      localStorage.setItem('token', this.token);
+      try {
+        const fs = useFriendshipStore();
+        const ns = useNotificationStore();
+        await fs.fetchStates();
+        await ns.fetchNotifications();
+        await ns.fetchUnreadCount();
         ns.listenForRealTimeUpdates(this.user?.id);
         this.startHeartbeat();
       } catch { /* non-critical */ }

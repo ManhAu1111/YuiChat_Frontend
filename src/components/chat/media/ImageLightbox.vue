@@ -1,11 +1,14 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { getFileUrl } from '../../../services/api';
 
 const props = defineProps({
-  src: { type: String, required: true },
-  alt: { type: String, default: 'Ảnh' },
+  attachment: { type: Object, required: true },
 });
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'forward']);
+
+const imageUrl = computed(() => getFileUrl(props.attachment.file_url));
+const imageAlt = computed(() => props.attachment.file_name || 'Ảnh');
 
 // Đóng khi nhấn Escape
 const handleKey = (e) => { if (e.key === 'Escape') emit('close'); };
@@ -31,9 +34,21 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleKey));
         </svg>
       </button>
 
+      <!-- Nút chia sẻ (Forward) -->
+      <button
+        @click="emit('forward')"
+        class="absolute top-4 right-28 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+        style="background:rgba(255,255,255,0.15); color:#fff;"
+        aria-label="Chuyển tiếp"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+        </svg>
+      </button>
+
       <!-- Nút download -->
       <a
-        :href="src"
+        :href="imageUrl"
         target="_blank"
         download
         class="absolute top-4 right-16 w-9 h-9 rounded-full flex items-center justify-center transition-colors"
@@ -48,8 +63,8 @@ onBeforeUnmount(() => document.removeEventListener('keydown', handleKey));
 
       <!-- Ảnh -->
       <img
-        :src="src"
-        :alt="alt"
+        :src="imageUrl"
+        :alt="imageAlt"
         class="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl select-none"
         draggable="false"
       />
