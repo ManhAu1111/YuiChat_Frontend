@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { useThemeStore } from '../../../stores/themeStore';
+import { useProfileStore } from '../../../stores/profileStore';
 
 const props = defineProps({
   currentTab: { type: String, required: true }
@@ -10,6 +11,7 @@ const props = defineProps({
 const emit = defineEmits(['change-tab']);
 const notificationStore = useNotificationStore();
 const themeStore = useThemeStore();
+const profileStore = useProfileStore();
 
 const tabs = [
   {
@@ -40,6 +42,9 @@ const tabs = [
 ];
 
 const changeTab = (tabId) => {
+  if (tabId === 'profile') {
+    profileStore.clearProfile();
+  }
   emit('change-tab', tabId);
 };
 </script>

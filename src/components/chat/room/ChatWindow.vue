@@ -6,7 +6,9 @@ import { useThemeStore } from '../../../stores/themeStore';
 import ChatHeader from './ChatHeader.vue';
 import ChatInput from './ChatInput.vue';
 import MessageBubble from './MessageBubble.vue';
+import TypingIndicator from './TypingIndicator.vue';
 import GroupInfoPanel from '../info/GroupInfoPanel.vue';
+import ForwardModal from '../modals/ForwardModal.vue';
 
 const props = defineProps(['chatId']);
 const emit = defineEmits(['back']);
@@ -91,6 +93,30 @@ const isLastInSequence = (idx) => {
   
   return false;
 };
+
+// Selection Mode Logic
+const isForwardModalOpen = ref(false);
+
+const handleCancelSelection = () => {
+  chatStore.toggleSelectionMode(false);
+};
+
+const handleForwardSelected = () => {
+  if (chatStore.selectedMessageIds.length === 0) return;
+  selectedAttachments.value = []; // clear attachments
+  isForwardModalOpen.value = true;
+};
+
+const selectedAttachments = ref([]);
+const handleForwardAttachment = (attachment) => {
+  chatStore.toggleSelectionMode(false); // clear message selection
+  selectedAttachments.value = [attachment];
+  isForwardModalOpen.value = true;
+};
+
+const handleForwardSuccess = () => {
+  // Option: show a toast or alert
+};
 </script>
 
 <template>
@@ -99,9 +125,27 @@ const isLastInSequence = (idx) => {
     Sent bubbles: Apple Blue #0071e3
     Received: #e9e9eb (light gray, no shadow)
   -->
-  <div class="flex flex-col h-full transition-colors duration-300"
+  <div class="flex flex-col h-full transition-colors duration-300 relative"
        :style="themeStore.isDark ? 'background: #000000;' : 'background: #ffffff;'">
+    
+    <!-- Selection Mode Toolbar (Replaces header visually when active) -->
+    <div v-if="chatStore.isSelectionMode" class="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 shadow-sm transition-colors duration-300 backdrop-blur-md"
+         :style="themeStore.isDark ? 'background: rgba(28,28,30,0.8); border-bottom: 1px solid rgba(255,255,255,0.08);' : 'background: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(0,0,0,0.05);'">
+      <div class="flex items-center gap-4">
+        <button @click="handleCancelSelection" class="text-sm font-medium" :style="themeStore.isDark ? 'color: #0a84ff;' : 'color: #007aff;'">Hủy</button>
+        <span class="font-semibold text-[17px]" :style="themeStore.isDark ? 'color: #ffffff;' : 'color: #1d1d1f;'">Đã chọn {{ chatStore.selectedMessageIds.length }}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button @click="handleForwardSelected" :disabled="chatStore.selectedMessageIds.length === 0" 
+                class="w-8 h-8 rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+                :style="themeStore.isDark ? 'background: rgba(255,255,255,0.1); color: #ffffff;' : 'background: rgba(0,0,0,0.05); color: #1d1d1f;'">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </button>
+      </div>
+    </div>
+
     <ChatHeader 
+      v-else
       :chatId="chatId" 
       :user="targetUser" 
       @back="emit('back')" 
@@ -153,7 +197,7 @@ const isLastInSequence = (idx) => {
                       d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
               </svg>
             </div>
-            <p class="text-sm font-medium transition-colors duration-300"
+            <p class="text-sm font-msdegghseegweklj., aesjgglawse klkjhedium transition-colors duration-300"
                style="letter-spacing: -0.224px;"
                :style="themeStore.isDark ? 'color: rgba(255,255,255,0.48);' : 'color: rgba(0,0,0,0.48);'">
               Hãy bắt đầu cuộc trò chuyện!
@@ -172,20 +216,40 @@ const isLastInSequence = (idx) => {
           :participants="currentConversation?.participants || []"
           :isGroup="currentConversation?.is_group || false"
           :showTimeAndStatus="isLastInSequence(idx)"
+          @forward-attachment="handleForwardAttachment"
         />
       </TransitionGroup>
+
+        <!-- Typing Indicators -->
+        <TransitionGroup name="fade" tag="div">
+          <div v-if="chatStore.typingUsers[chatId]?.length > 0" class="mt-2 pl-2">
+            <TypingIndicator 
+              v-for="user in chatStore.typingUsers[chatId]" 
+              :key="user.id" 
+              :user="user" 
+            />
+          </div>
+        </TransitionGroup>
         </div>
 
         <ChatInput :conversationId="chatId" />
       </div>
       
-      <!-- Group Info Panel (Right Sidebar) -->
       <GroupInfoPanel 
         v-if="isGroupInfoOpen && currentConversation?.is_group"
         :conversation="currentConversation"
         @close="isGroupInfoOpen = false"
       />
     </div>
+
+    <!-- Forward Modal -->
+    <ForwardModal 
+      :isOpen="isForwardModalOpen"
+      :messageIds="chatStore.selectedMessageIds"
+      :attachments="selectedAttachments"
+      @close="isForwardModalOpen = false"
+      @forwarded="handleForwardSuccess"
+    />
   </div>
 </template>
 

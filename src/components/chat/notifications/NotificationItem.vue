@@ -2,6 +2,7 @@
 import { useFriendshipStore } from '../../../stores/friendshipStore';
 import { useNotificationStore } from '../../../stores/notificationStore';
 import { useThemeStore } from '../../../stores/themeStore';
+import { getFileUrl } from '../../../services/api';
 
 const props = defineProps({
   noti: { type: Object, required: true },
@@ -17,9 +18,9 @@ const themeStore = useThemeStore();
 
 const getAvatar = (noti) => {
   if (noti.type?.includes('GroupAddedNoti')) {
-    return noti.data?.adder_avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(noti.data?.adder_name || 'U') + '&background=f0f0f0';
+    return noti.data?.adder_avatar ? getFileUrl(noti.data.adder_avatar) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(noti.data?.adder_name || 'U') + '&background=f0f0f0';
   }
-  return noti.data?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(noti.data?.sender_name || 'U') + '&background=f0f0f0';
+  return noti.data?.avatar ? getFileUrl(noti.data.avatar) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(noti.data?.sender_name || 'U') + '&background=f0f0f0';
 };
 
 const handleAccept = async () => {

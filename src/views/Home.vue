@@ -3,7 +3,7 @@ import ChatList from '../components/chat/sidebar/ChatList.vue';
 import ChatWindow from '../components/chat/room/ChatWindow.vue';
 import BottomNav from '../components/chat/navigation/BottomNav.vue';
 import ContactsPlaceholder from '../components/chat/tabs/ContactsPlaceholder.vue';
-import ProfilePlaceholder from '../components/chat/tabs/ProfilePlaceholder.vue';
+import ProfileTab from '../components/chat/tabs/ProfileTab.vue';
 import SettingsPlaceholder from '../components/chat/tabs/SettingsPlaceholder.vue';
 import NotificationPanel from '../components/chat/notifications/NotificationPanel.vue';
 
@@ -130,7 +130,7 @@ onMounted(async () => {
       <!-- Other tabs -->
       <ContactsPlaceholder    v-else-if="currentTab === 'contacts'"      @back="handleBackToList" />
       <NotificationPanel      v-else-if="currentTab === 'notifications'" @back="handleBackToList" />
-      <ProfilePlaceholder     v-else-if="currentTab === 'profile'"       @back="handleBackToList" />
+      <ProfileTab             v-else-if="currentTab === 'profile'"       @back="handleBackToList" />
       <SettingsPlaceholder    v-else-if="currentTab === 'settings'"      @back="handleBackToList" />
 
       <!-- Empty state -->

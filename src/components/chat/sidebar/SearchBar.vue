@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { useChatStore } from '../../../stores/chatStore';
 import FriendshipButton from '../ui/FriendshipButton.vue';
+import { getFileUrl } from '../../../services/api';
 
 const emit = defineEmits(['open-create-group', 'start-conversation']);
 
@@ -92,9 +93,9 @@ const handleStartConversation = (userId) => {
             onmouseout="this.style.background='transparent'"
           >
             <img
-              :src="user.avatar || 'https://ui-avatars.com/api/?name=' + user.name + '&background=random'"
+              :src="user.avatar ? getFileUrl(user.avatar) : 'https://ui-avatars.com/api/?name=' + user.name + '&background=random'"
               class="w-10 h-10 rounded-full object-cover flex-shrink-0"
-              style="background: var(--hover-bg);"
+              style="background: var(--hover-bg); min-width: 40px; min-height: 40px; aspect-ratio: 1/1;"
               :alt="user.name"
             />
             <div class="min-w-0">
@@ -110,8 +111,8 @@ const handleStartConversation = (userId) => {
           </button>
 
           <!-- Friendship action buttons -->
-          <div class="flex-shrink-0 pr-2">
-            <FriendshipButton :targetUserId="user.id" />
+          <div class="flex-shrink-0 pr-2 flex items-center justify-center">
+            <FriendshipButton :targetUserId="user.id" :iconOnly="true" />
           </div>
         </div>
       </div>

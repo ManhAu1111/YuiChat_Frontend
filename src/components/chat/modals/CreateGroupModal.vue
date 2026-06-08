@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useFriendshipStore } from '../../../stores/friendshipStore';
 import { useChatStore } from '../../../stores/chatStore';
+import { getFileUrl } from '../../../services/api';
 
 const emit = defineEmits(['close', 'created']);
 const friendshipStore = useFriendshipStore();
@@ -124,7 +125,7 @@ const handleCreateGroup = async () => {
                 
                 <!-- Avatar -->
                 <img 
-                  :src="friend.avatar || `https://ui-avatars.com/api/?name=${friend.name}&background=random`" 
+                  :src="friend.avatar ? getFileUrl(friend.avatar) : `https://ui-avatars.com/api/?name=${friend.name}&background=random`" 
                   class="w-10 h-10 rounded-full object-cover mr-3"
                 />
                 
