@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, ref } from 'vue';
 import { useStatusStore } from '../../../stores/statusStore';
 import { useAuthStore } from '../../../stores/auth';
 import ActiveStatusItem from './ActiveStatusItem.vue';
@@ -23,13 +23,30 @@ const friends = computed(() => {
   // Exclude current user from the friends list
   return statusStore.statuses.filter(u => u.id !== authStore.user.id);
 });
+
+const scrollContainer = ref(null);
+
+const handleWheel = (e) => {
+  if (scrollContainer.value) {
+    // Nếu chỉ cuộn dọc (chuột) thì chuyển thành cuộn ngang
+    if (e.deltaY !== 0 && Math.abs(e.deltaX) < 10) {
+      e.preventDefault();
+      scrollContainer.value.scrollLeft += e.deltaY;
+    }
+  }
+};
+
+onMounted(() => {
+  if (scrollContainer.value) {
+    scrollContainer.value.addEventListener('wheel', handleWheel, { passive: false });
+  }
+});
 </script>
 
 <template>
   <div class="w-full py-3 px-1 border-b border-[var(--glass-border)]">
     <!-- Horizontal scroll container -->
-    <div class="flex items-end overflow-x-auto overflow-y-hidden scrollbar-hide snap-x"
-         style="scrollbar-width: none; -ms-overflow-style: none;">
+    <div ref="scrollContainer" class="flex items-end overflow-x-auto overflow-y-hidden snap-x hide-scrollbar pb-2">
       
       <!-- Current User / Add Note -->
       <ActiveStatusItem 
@@ -60,7 +77,18 @@ const friends = computed(() => {
 </template>
 
 <style scoped>
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
+/* Thanh trượt ngang tinh tế */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--glass-border, rgba(150, 150, 150, 0.3));
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary, rgba(150, 150, 150, 0.6));
 }
 </style>

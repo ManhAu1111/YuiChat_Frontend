@@ -8,6 +8,9 @@ import { useStatusStore } from '../../../stores/statusStore';
 import { useProfileStore } from '../../../stores/profileStore';
 import FriendshipButton from '../ui/FriendshipButton.vue';
 import StatusIconBadge from '../sidebar/StatusIconBadge.vue';
+import UserAvatar from '../ui/UserAvatar.vue';
+import StatusUpdateModal from '../ui/StatusUpdateModal.vue';
+import ThoughtBubble from '../ui/ThoughtBubble.vue';
 
 const authStore = useAuthStore();
 const themeStore = useThemeStore();
@@ -16,14 +19,36 @@ const profileStore = useProfileStore();
 const emit = defineEmits(['back']);
 
 const displayUser = computed(() => {
-  return profileStore.viewingUserId && profileStore.viewedUser 
-    ? profileStore.viewedUser 
-    : authStore.user;
+  if (profileStore.viewingUserId && profileStore.viewedUser) {
+    return profileStore.viewedUser;
+  }
+  
+  if (authStore.user) {
+    // Lấy status mới nhất từ statusStore nếu có
+    const foundInStatusStore = statusStore.statuses.find(u => u.id === authStore.user.id);
+    if (foundInStatusStore && foundInStatusStore.status !== undefined) {
+      return { ...authStore.user, status: foundInStatusStore.status };
+    }
+    return authStore.user;
+  }
+  
+  return null;
 });
 
 const isCurrentUserProfile = computed(() => {
   if (!authStore.user || !displayUser.value) return false;
   return authStore.user.id === displayUser.value.id;
+});
+
+const isStatusModalOpen = ref(false);
+
+const statusText = computed(() => {
+  if (!displayUser.value?.status || !displayUser.value.status.content) return null;
+  return displayUser.value.status.content;
+});
+
+const showPlusBubble = computed(() => {
+  return isCurrentUserProfile.value && !statusText.value;
 });
 
 const isEditing = ref(false);
@@ -217,45 +242,46 @@ const handleSave = async () => {
 
       <!-- Avatar -->
       <div class="relative mb-6">
-        <div class="w-24 h-24 rounded-full overflow-hidden transition-colors duration-300 relative group"
-             :style="themeStore.isDark ? 'background: #272729; border: 1px solid rgba(255,255,255,0.08);' : 'background: #e9e9eb; border: 1px solid rgba(0,0,0,0.06);'">
-          <img
-            v-if="isEditing ? editForm.avatar : displayUser.avatar"
-            :src="getFileUrl(isEditing ? editForm.avatar : displayUser.avatar)"
-            class="w-full h-full object-cover transition-opacity"
-            :class="{ 'opacity-50': isUploading }"
-            alt="Avatar"
-          />
-          <div v-else class="w-full h-full flex items-center justify-center transition-opacity" :class="{ 'opacity-50': isUploading }">
-            <svg class="w-10 h-10 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                 :style="themeStore.isDark ? 'color: rgba(255,255,255,0.2);' : 'color: rgba(0,0,0,0.2);'">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-            </svg>
-          </div>
-          
-          <!-- Upload overlay (only in edit mode) -->
-          <div v-if="isEditing" @click="isAvatarModalOpen = true" class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          
-          <input type="file" id="avatar-upload" class="hidden" accept="image/*" @change="handleAvatarUpload">
-        </div>
         
-        <!-- Status Icon Badge (if available) -->
-        <StatusIconBadge 
-          v-if="!isEditing && displayUser.status?.icon"
-          :iconCode="displayUser.status.icon"
-          positionClass="-top-1 -right-1"
+        <ThoughtBubble 
+          v-if="!isEditing"
+          :text="statusText" 
+          :isCurrentUser="isCurrentUserProfile" 
+          positionClass="absolute -top-2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-30"
+          @click="isStatusModalOpen = true"
         />
 
-        <!-- Online dot (only in view mode) -->
-        <div v-if="!isEditing && displayUser.is_online" class="absolute bottom-0.5 right-0.5 w-5 h-5 rounded-full border-2 transition-colors duration-300"
-             :style="themeStore.isDark ? 'background: #32d74b; border-color: #000000;' : 'background: #32d74b; border-color: #ffffff;'"></div>
+        <UserAvatar
+          :user="isEditing ? { ...displayUser, avatar: editForm.avatar, name: editForm.name } : displayUser"
+          sizeClass="w-24 h-24"
+          :showOnline="!isEditing"
+          onlineDotClass="w-5 h-5 border-2"
+          :disableClick="true"
+          class="group"
+          :class="{ 'opacity-50': isUploading }"
+        >
+          <template #badge>
+            <!-- Upload overlay (only in edit mode) -->
+            <div v-if="isEditing" @click="isAvatarModalOpen = true" class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-20">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            
+            <input type="file" id="avatar-upload" class="hidden" accept="image/*" @change="handleAvatarUpload">
+            
+            <!-- Status Icon Badge (if available) -->
+            <StatusIconBadge 
+              v-if="!isEditing && displayUser.status?.icon"
+              :iconCode="displayUser.status.icon"
+              positionClass="-top-1 -right-1"
+            />
+          </template>
+        </UserAvatar>
       </div>
+
+      <StatusUpdateModal :isOpen="isStatusModalOpen" @close="isStatusModalOpen = false" />
 
       <!-- View Mode Details -->
       <template v-if="!isEditing">

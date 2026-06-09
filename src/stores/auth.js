@@ -59,6 +59,22 @@ export const useAuthStore = defineStore('auth', {
         this.startHeartbeat();
       } catch { /* non-critical */ }
     },
+    async sendOtp(userData) {
+      try {
+        await api.post('/send-otp', userData);
+      } catch (error) {
+        console.error("Lỗi gửi OTP:", error);
+        throw error;
+      }
+    },
+    async verifyOtp(email, otp) {
+      try {
+        await api.post('/verify-otp', { email, otp });
+      } catch (error) {
+        console.error("Lỗi xác thực OTP:", error);
+        throw error;
+      }
+    },
     async register(userData) {
       const response = await api.post('/register', userData);
       this.token = response.data.access_token;
@@ -152,6 +168,18 @@ export const useAuthStore = defineStore('auth', {
             if (friend) {
               friend.is_online = isOnline;
             }
+          })
+          .listen('.UserMoodStatusChanged', (e) => {
+            const { userId, status } = e;
+            import('./statusStore').then(({ useStatusStore }) => {
+              const statusStore = useStatusStore();
+              
+              // Cập nhật trạng thái của người dùng trong danh sách ActiveStatusList
+              const userInStore = statusStore.statuses.find(u => u.id === userId);
+              if (userInStore) {
+                userInStore.status = status;
+              }
+            });
           });
       }
     },

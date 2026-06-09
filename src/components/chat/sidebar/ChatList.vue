@@ -52,11 +52,13 @@ const handleStartConversation = async (userId) => {
       @start-conversation="handleStartConversation"
     />
 
-    <!-- Active Statuses / Notes -->
-    <ActiveStatusList />
+    <!-- Main Scrollable Area -->
+    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col">
+      <!-- Active Statuses / Notes -->
+      <ActiveStatusList />
 
-    <!-- Conversation list -->
-    <div class="flex-1 overflow-y-auto px-2 py-2">
+      <!-- Conversation list container -->
+      <div class="flex-1 px-2 py-2 flex flex-col">
 
       <!-- Loading skeleton -->
       <div v-if="chatStore.isLoading && chatStore.conversations.length === 0" class="space-y-1 animate-pulse">
@@ -94,6 +96,7 @@ const handleStartConversation = async (userId) => {
           :selected="selectedId === chat.id"
           @select="selectChat"
         />
+      </div>
       </div>
     </div>
     
