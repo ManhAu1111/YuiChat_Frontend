@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { getFileUrl } from '../../../services/api';
 import { useProfileStore } from '../../../stores/profileStore';
 import { useAuthStore } from '../../../stores/auth';
+import OnlineDot from './OnlineDot.vue';
 
 const props = defineProps({
   user: {
@@ -25,6 +26,10 @@ const props = defineProps({
   ringClass: {
     type: String,
     default: ''
+  },
+  disableClick: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -50,7 +55,9 @@ const handleAvatarClick = async () => {
 </script>
 
 <template>
-  <div class="relative flex-shrink-0 cursor-pointer transition-transform duration-200 hover:scale-105" @click.stop="handleAvatarClick">
+  <div class="relative flex-shrink-0" 
+       :class="{ 'cursor-pointer transition-transform duration-200 hover:scale-105': !disableClick }" 
+       @click.stop="!disableClick && handleAvatarClick()">
     <!-- Optional Ring Wrapper -->
     <div :class="ringClass ? `p-0.5 rounded-full ${ringClass}` : ''">
       <!-- Main Avatar Image -->
@@ -64,11 +71,7 @@ const handleAvatarClick = async () => {
     </div>
     
     <!-- Online Indicator -->
-    <div v-if="showOnline && user?.is_online"
-         class="absolute rounded-full transition-colors duration-300 z-10 bg-[#32d74b]"
-         :class="onlineDotClass"
-         style="border-color: var(--bg-secondary); bottom: 2px; right: 2px;">
-    </div>
+    <OnlineDot v-if="showOnline && user?.id !== authStore.user?.id" :is-online="user?.is_online" :dot-class="onlineDotClass" />
     
     <!-- Slots for extra badges (e.g. Status Icon) -->
     <slot name="badge"></slot>

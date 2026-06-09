@@ -158,6 +158,11 @@ export const useFriendshipStore = defineStore('friendship', {
         import('./chatStore').then(({ useChatStore }) => {
           useChatStore().fetchConversations();
         });
+        
+        // Fetch statuses to update ActiveStatusList
+        import('./statusStore').then(({ useStatusStore }) => {
+          useStatusStore().fetchStatuses();
+        });
       } catch (err) {
         // Roll back
         this.friendshipStates.accepted = this.friendshipStates.accepted.filter(v => v !== id);
@@ -241,6 +246,11 @@ export const useFriendshipStore = defineStore('friendship', {
         // Fetch conversations to show the newly created chat at the top
         import('./chatStore').then(({ useChatStore }) => {
           useChatStore().fetchConversations();
+        });
+
+        // Fetch statuses to update ActiveStatusList
+        import('./statusStore').then(({ useStatusStore }) => {
+          useStatusStore().fetchStatuses();
         });
       }
 
