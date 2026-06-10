@@ -199,7 +199,7 @@ const handleSave = async () => {
 
 <template>
   <!-- Apple Profile: Hỗ trợ chuyển đổi nền sáng tối mượt mà -->
-  <div class="relative flex flex-col h-full overflow-y-auto transition-colors duration-300"
+  <div class="relative flex flex-col h-full overflow-y-auto pb-[120px] transition-colors duration-300"
        :style="themeStore.isDark ? 'background: #000000;' : 'background: #f5f5f7;'">
 
     <!-- Back (mobile) -->

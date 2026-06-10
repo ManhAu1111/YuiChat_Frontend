@@ -56,7 +56,7 @@ const handleMarkAsRead = async (notification) => {
     </div>
 
     <!-- Notifications list -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-3 relative z-0">
+    <div class="flex-1 overflow-y-auto p-4 pb-[120px] space-y-3 relative z-0">
       <!-- Loading skeleton -->
       <div v-if="notificationStore.isLoading" class="space-y-3 animate-pulse">
         <div v-for="i in 4" :key="i"

@@ -45,15 +45,21 @@ const handleStartConversation = async (userId) => {
 
 <template>
   <div class="flex flex-col h-full relative transition-colors duration-300">
+    <!-- Glassmorphism Background for Search Bar -->
+    <div class="absolute top-0 left-0 w-full z-10 pointer-events-none h-[86px]"
+         style="background: linear-gradient(to bottom, var(--bg-secondary) 40%, transparent 100%); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); mask-image: linear-gradient(to bottom, black 50%, transparent 100%);">
+    </div>
 
     <!-- Search bar -->
-    <SearchBar
-      @open-create-group="isCreateGroupModalOpen = true"
-      @start-conversation="handleStartConversation"
-    />
+    <div class="absolute top-0 left-0 w-full z-20">
+      <SearchBar
+        @open-create-group="isCreateGroupModalOpen = true"
+        @start-conversation="handleStartConversation"
+      />
+    </div>
 
     <!-- Main Scrollable Area -->
-    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col">
+    <div class="flex-1 overflow-y-auto hide-scrollbar flex flex-col pt-[76px] pb-[120px] relative z-0">
       <!-- Active Statuses / Notes -->
       <ActiveStatusList />
 

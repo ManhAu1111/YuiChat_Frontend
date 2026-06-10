@@ -87,9 +87,9 @@ onMounted(async () => {
 
     <!-- ── Sidebar ── -->
     <aside
-      class="flex flex-col h-full flex-shrink-0 transition-all duration-300"
+      class="flex flex-col h-full flex-shrink-0 transition-all duration-300 relative"
       :class="[
-        'w-full md:w-[320px]',
+        'w-full md:w-[360px] lg:w-[380px]',
         (!selectedChatId && currentTab === 'messages') ? 'flex' : 'hidden md:flex'
       ]"
       style="background: var(--bg-secondary); border-right: 1px solid var(--border-color);"
@@ -151,6 +151,15 @@ onMounted(async () => {
           Chọn một cuộc trò chuyện ở bên trái để bắt đầu nhắn tin.
         </p>
       </div>
+
+      <!-- Bottom Navigation for mobile inside main area -->
+      <BottomNav 
+        v-if="!selectedChatId && currentTab !== 'messages'" 
+        class="md:hidden mt-auto flex-shrink-0 z-50 transition-colors duration-300"
+        style="background: var(--bg-primary);"
+        :currentTab="currentTab" 
+        @change-tab="handleTabChange" 
+      />
     </main>
 
   </div>
