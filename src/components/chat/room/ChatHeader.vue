@@ -3,6 +3,7 @@ import { useThemeStore } from '../../../stores/themeStore';
 import { getFileUrl } from '../../../services/api';
 import UserAvatar from '../ui/UserAvatar.vue';
 import GroupAvatar from '../ui/GroupAvatar.vue';
+import StatusIconBadge from '../sidebar/StatusIconBadge.vue';
 
 const props = defineProps(['chatId', 'user']);
 const emit = defineEmits(['back', 'open-info']);
@@ -48,7 +49,14 @@ const formatOfflineTime = (dateStr) => {
 
       <!-- Avatar -->
       <GroupAvatar v-if="user?.is_group" :chat="user" sizeClass="w-10 h-10" />
-      <UserAvatar v-else :user="user" sizeClass="w-10 h-10" />
+      <div v-else class="relative">
+        <UserAvatar :user="user" sizeClass="w-10 h-10" />
+        <StatusIconBadge 
+          v-if="user?.active_status?.icon" 
+          :iconCode="user.active_status.icon" 
+          positionClass="-top-1.5 -right-1.5" 
+        />
+      </div>
 
       <!-- Name + status -->
       <div class="flex flex-col justify-center">

@@ -44,9 +44,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full py-3 px-1 border-b border-[var(--glass-border)]">
+  <div class="w-full border-b border-[var(--glass-border)]">
     <!-- Horizontal scroll container -->
-    <div ref="scrollContainer" class="flex items-end overflow-x-auto overflow-y-hidden snap-x hide-scrollbar pb-2">
+    <div ref="scrollContainer" class="flex items-end overflow-x-auto overflow-y-hidden snap-x hide-scrollbar pt-8 pb-4 px-4">
       
       <!-- Current User / Add Note -->
       <ActiveStatusItem 

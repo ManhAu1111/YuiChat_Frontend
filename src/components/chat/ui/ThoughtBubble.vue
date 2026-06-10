@@ -25,6 +25,7 @@ const showPlusBubble = computed(() => {
   return props.isCurrentUser && !props.text;
 });
 
+
 const handleClick = (e) => {
   e.stopPropagation();
   if (props.isCurrentUser) {
@@ -38,15 +39,17 @@ const handleClick = (e) => {
 <template>
   <div v-if="text || showPlusBubble" 
        @click="handleClick"
-       class="z-10 flex items-center justify-center shadow-sm border border-white/10 backdrop-blur-md transition-all duration-300 group-hover:-translate-y-1 cursor-pointer w-max"
+       class="z-10 flex items-center justify-center shadow-sm backdrop-blur-md transition-all duration-300 group-hover:-translate-y-1 cursor-pointer w-max"
        :class="[
           positionClass,
-          showPlusBubble ? 'px-2 py-1.5 rounded-2xl bg-[var(--glass-panel)] text-[8px] text-[var(--text-secondary)] whitespace-nowrap' : 'px-1.5 py-1 rounded-xl bg-[var(--glass-panel)] text-[8px] text-[var(--text-primary)]',
-          isCurrentUser ? 'hover:bg-[var(--hover-bg)]' : ''
+          showPlusBubble 
+            ? 'px-1.5 py-0.5 rounded-xl bg-[var(--accent-light)] text-[7px] text-[var(--accent-color)] font-medium whitespace-nowrap' 
+            : 'px-1.5 py-[2px] rounded-[10px] bg-[var(--accent-color)] text-[7.5px] text-white',
+          isCurrentUser ? 'hover:scale-105' : ''
        ]"
-       style="max-width: 85px;"
+       style="max-width: 68px;"
   >
-    <div v-if="text" class="line-clamp-3 break-words text-center leading-[1.3]" style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; text-wrap: balance;">
+    <div v-if="text" class="line-clamp-3 break-words text-center leading-[1.1]" style="display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; text-wrap: balance; letter-spacing: -0.2px;">
       {{ text }}
     </div>
     <template v-else-if="showPlusBubble">
