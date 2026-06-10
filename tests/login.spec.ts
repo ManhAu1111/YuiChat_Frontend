@@ -15,7 +15,8 @@ test.describe('Trang đăng nhập', () => {
   });
 
   test('hiển thị đúng tiêu đề và các phần tử quan trọng', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('YuiChat');
+    await expect(page.locator('h1')).toContainText('Kết nối');
+    await expect(page.locator('h2')).toContainText('YuiChat');
     await expect(page.locator('p', { hasText: 'Đăng nhập để bắt đầu' })).toBeVisible();
     await expect(page.locator('#email-input')).toBeVisible();
     await expect(page.locator('#password-input')).toBeVisible();
@@ -48,7 +49,7 @@ test.describe('Trang đăng nhập', () => {
     await page.locator('#login-submit-btn').click();
 
     await expect(page.locator('#login-submit-btn')).toBeDisabled();
-    await expect(page.locator('#login-submit-btn')).toContainText('Đang kiểm tra');
+    await expect(page.locator('#login-submit-btn')).toContainText('Đang xử lý...');
   });
 
   test('hiển thị lỗi khi thông tin đăng nhập sai', async ({ page }) => {

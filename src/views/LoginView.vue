@@ -176,7 +176,7 @@ const handleLoginSuccess = async (response) => {
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="isRegisterMode ? (registerStep === 1 ? handleSendOtp() : (registerStep === 2 ? handleVerifyOtp() : handleRegister())) : handleLogin()" class="space-y-4">
+        <form id="login-form" @submit.prevent="isRegisterMode ? (registerStep === 1 ? handleSendOtp() : (registerStep === 2 ? handleVerifyOtp() : handleRegister())) : handleLogin()" class="space-y-4">
 
           <!-- Error banner -->
           <transition name="fade">
@@ -189,18 +189,18 @@ const handleLoginSuccess = async (response) => {
           <!-- ================= LOGIN MODE ================= -->
           <template v-if="!isRegisterMode">
             <div class="space-y-1.5">
-              <label class="block text-[13px] font-medium text-white/70">Email</label>
-              <input v-model="email" type="email" autocomplete="email" required placeholder="ten@example.com" class="apple-input w-full"/>
+              <label for="email-input" class="block text-[13px] font-medium text-white/70">Email</label>
+              <input id="email-input" v-model="email" type="email" autocomplete="email" required placeholder="ten@example.com" class="apple-input w-full"/>
             </div>
 
             <div class="space-y-1.5">
               <div class="flex items-center justify-between">
-                <label class="block text-[13px] font-medium text-white/70">Mật khẩu</label>
+                <label for="password-input" class="block text-[13px] font-medium text-white/70">Mật khẩu</label>
                 <a href="#" class="text-[13px] text-blue-400 hover:opacity-80 transition-opacity">Quên mật khẩu?</a>
               </div>
               <div class="relative">
-                <input v-model="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" required placeholder="••••••••" class="apple-input w-full pr-12"/>
-                <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-3 flex items-center px-1 text-white/40 hover:text-white/70 transition-colors">
+                <input id="password-input" v-model="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" required placeholder="••••••••" class="apple-input w-full pr-12"/>
+                <button type="button" :aria-label="showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'" @click="showPassword = !showPassword" class="absolute inset-y-0 right-3 flex items-center px-1 text-white/40 hover:text-white/70 transition-colors">
                   <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                   </svg>
@@ -269,7 +269,7 @@ const handleLoginSuccess = async (response) => {
 
           <!-- Primary CTA -->
           <div class="pt-4">
-            <button type="submit" :disabled="isLoading" class="apple-btn w-full py-3.5 text-[17px]">
+            <button id="login-submit-btn" type="submit" :disabled="isLoading" class="apple-btn w-full py-3.5 text-[17px]">
               <span v-if="isLoading" class="flex items-center justify-center gap-2">
                 <svg class="w-4 h-4 animate-spin-smooth" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="3"/>
