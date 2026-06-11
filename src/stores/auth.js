@@ -128,9 +128,23 @@ export const useAuthStore = defineStore('auth', {
     },
     startHeartbeat() {
       const deviceId = getOrCreateDeviceId();
-      const sendHeartbeat = () => {
+      let fcmToken = null;
+
+      const sendHeartbeat = async () => {
+        if (!fcmToken && 'Notification' in window) {
+           try {
+             const { requestFirebaseNotificationPermission } = await import('../services/firebase');
+             fcmToken = await requestFirebaseNotificationPermission();
+           } catch (e) {
+             console.error("Failed to get FCM token", e);
+           }
+        }
+
         if (this.token) {
-          api.post('/heartbeat', { device_id: deviceId }).catch(e => console.error("Heartbeat error", e));
+          api.post('/heartbeat', { 
+            device_id: deviceId,
+            ...(fcmToken ? { fcm_token: fcmToken } : {})
+          }).catch(e => console.error("Heartbeat error", e));
         }
       };
       
