@@ -36,10 +36,10 @@ window.axios = api; // Expose to window so Laravel Echo uses it automatically fo
 window.Echo = new Echo({
   broadcaster: 'reverb',
   key: import.meta.env.VITE_REVERB_APP_KEY,
-  wsHost: currentHostname,
+  wsHost: import.meta.env.VITE_REVERB_HOST ?? currentHostname,
   wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
   wssPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-  forceTLS: false,
+  forceTLS: (import.meta.env.VITE_REVERB_SCHEME === 'https'),
   disableStats: true,
   enabledTransports: ['ws', 'wss'],
   authorizer: (channel, options) => {
