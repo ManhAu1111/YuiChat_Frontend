@@ -25,26 +25,9 @@ export const requestFirebaseNotificationPermission = async () => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      // Register SW explicitly
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      
-      // Pass the config to the service worker
-      if (registration.active) {
-          registration.active.postMessage({
-              type: 'FIREBASE_CONFIG',
-              config: firebaseConfig
-          });
-      } else {
-          // If installing, wait for state change
-          registration.installing?.addEventListener('statechange', (e) => {
-              if (e.target.state === 'activated') {
-                  registration.active.postMessage({
-                      type: 'FIREBASE_CONFIG',
-                      config: firebaseConfig
-                  });
-              }
-          });
-      }
+      // Pass config to SW via URL parameters so it's available during background wake-ups
+      const configParams = new URLSearchParams(firebaseConfig).toString();
+      const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${configParams}`);
 
       // Get the token. Make sure you add your VAPID key in .env as VITE_FIREBASE_VAPID_KEY
       const currentToken = await getToken(messaging, { 
@@ -68,11 +51,11 @@ export const requestFirebaseNotificationPermission = async () => {
   }
 };
 
-export const onMessageListener = () =>
-  new Promise((resolve) => {
-    onMessage(messaging, (payload) => {
-      resolve(payload);
-    });
+export const onMessageListener = (callback) => {
+  if (!messaging) return;
+  return onMessage(messaging, (payload) => {
+    callback(payload);
   });
+};
 
 export { messaging };

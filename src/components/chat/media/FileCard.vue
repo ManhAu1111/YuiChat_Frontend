@@ -38,7 +38,11 @@ const fileUrl = computed(() => {
   if (!url) return '#';
   if (url.includes('/storage/')) {
     const path = url.substring(url.indexOf('/storage/'));
-    const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '');
+    let apiUrl = import.meta.env.VITE_API_BASE_URL;
+    if (apiUrl && apiUrl.includes('localhost')) {
+      apiUrl = apiUrl.replace('localhost', window.location.hostname);
+    }
+    const baseUrl = apiUrl.replace(/\/api\/?$/, '');
     return `${baseUrl}${path}`;
   }
   return url;

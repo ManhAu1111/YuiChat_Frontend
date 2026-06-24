@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/auth';
 import { useFriendshipStore } from './stores/friendshipStore';
 import { useNotificationStore } from './stores/notificationStore';
 import { useThemeStore } from './stores/themeStore';
+import { onMessageListener } from './services/firebase';
 import NotificationToast from './components/chat/notifications/NotificationToast.vue';
 
 const authStore = useAuthStore();
@@ -32,6 +33,27 @@ onMounted(async () => {
   //    Only notificationStore subscribes; it dispatches friendship events internally.
   notificationStore.listenForRealTimeUpdates(authStore.user?.id);
   authStore.startHeartbeat();
+
+  // 4. Lắng nghe thông báo FCM khi đang mở web
+  onMessageListener((payload) => {
+    console.log('[App.vue] Nhận được FCM Foreground:', payload);
+    const title = payload.notification?.title || payload.data?.title || 'Thông báo mới';
+    const body = payload.notification?.body || payload.data?.body || 'Bạn có một tin nhắn mới.';
+    
+    // Tạo đối tượng giả để đẩy vào Toast Notification UI có sẵn
+    const notiObj = {
+      id: payload.messageId || Date.now(),
+      type: 'FCMMessageNoti',
+      data: {
+        title: title,
+        message: body,
+        conversation_id: payload.data?.conversation_id
+      },
+      read_at: null,
+      created_at: new Date().toISOString(),
+    };
+    notificationStore.showToast(notiObj);
+  });
 });
 </script>
 
