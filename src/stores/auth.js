@@ -75,6 +75,30 @@ export const useAuthStore = defineStore('auth', {
         throw error;
       }
     },
+    async sendForgotPasswordOtp(email) {
+      try {
+        await api.post('/forgot-password/send-otp', { email });
+      } catch (error) {
+        console.error("Lỗi gửi OTP quên mật khẩu:", error);
+        throw error;
+      }
+    },
+    async verifyForgotPasswordOtp(email, otp) {
+      try {
+        await api.post('/forgot-password/verify-otp', { email, otp });
+      } catch (error) {
+        console.error("Lỗi xác thực OTP quên mật khẩu:", error);
+        throw error;
+      }
+    },
+    async resetPassword(payload) {
+      try {
+        await api.post('/forgot-password/reset', payload);
+      } catch (error) {
+        console.error("Lỗi đổi mật khẩu mới:", error);
+        throw error;
+      }
+    },
     async register(userData) {
       const response = await api.post('/register', userData);
       this.token = response.data.access_token;
