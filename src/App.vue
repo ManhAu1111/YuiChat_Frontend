@@ -7,6 +7,7 @@ import { useNotificationStore } from './stores/notificationStore';
 import { useThemeStore } from './stores/themeStore';
 import { onMessageListener } from './services/firebase';
 import NotificationToast from './components/chat/notifications/NotificationToast.vue';
+import PWAInstallPrompt from './components/PWAInstallPrompt.vue';
 
 const authStore = useAuthStore();
 const friendshipStore = useFriendshipStore();
@@ -61,6 +62,8 @@ onMounted(async () => {
   <RouterView />
   <!-- Global toast notifications – rendered on top of everything -->
   <NotificationToast />
+  <!-- PWA Install Prompt banner -->
+  <PWAInstallPrompt />
 </template>
 
 <style>
