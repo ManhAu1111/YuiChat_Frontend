@@ -1,5 +1,10 @@
 import './assets/main.css'
 
+// Redirect 127.0.0.1 to localhost to prevent duplicate PWA installation origins
+if (window.location.hostname === '127.0.0.1') {
+  window.location.hostname = 'localhost'
+}
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'

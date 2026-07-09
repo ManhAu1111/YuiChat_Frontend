@@ -25,9 +25,8 @@ export const requestFirebaseNotificationPermission = async () => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === "granted") {
-      // Pass config to SW via URL parameters so it's available during background wake-ups
-      const configParams = new URLSearchParams(firebaseConfig).toString();
-      const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${configParams}`);
+      // Wait for PWA service worker to register and become ready
+      const registration = await navigator.serviceWorker.ready;
 
       // Get the token. Make sure you add your VAPID key in .env as VITE_FIREBASE_VAPID_KEY
       const currentToken = await getToken(messaging, { 
